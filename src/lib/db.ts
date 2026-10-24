@@ -29,17 +29,17 @@ const DATA_DIR = path.join(process.cwd(), '.data');
 const DATA_FILE = path.join(DATA_DIR, 'db.json');
 
 function ensureDataFile(): JsonDbData {
-  if (!fs.existsSync(DATA_DIR)) {
-    fs.mkdirSync(DATA_DIR, { recursive: true });
-  }
+  try {
+    if (!fs.existsSync(DATA_DIR)) {
+      fs.mkdirSync(DATA_DIR, { recursive: true });
+    }
 
-  if (fs.existsSync(DATA_FILE)) {
-    try {
+    if (fs.existsSync(DATA_FILE)) {
       const content = fs.readFileSync(DATA_FILE, 'utf-8');
       return JSON.parse(content);
-    } catch {
-      // fallback if corrupt
     }
+  } catch (err) {
+    // Read-only filesystem / serverless environment (e.g. Vercel)
   }
 
   // Generate initial database

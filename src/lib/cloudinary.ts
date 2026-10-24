@@ -19,11 +19,18 @@ if (isCloudinaryConfigured) {
   });
 }
 
-const LOCAL_TEMP_DIR = path.join(process.cwd(), 'public', 'uploads', 'temp');
+const LOCAL_TEMP_DIR =
+  process.env.NODE_ENV === 'production'
+    ? path.join('/tmp', 'cleanbieber_uploads')
+    : path.join(process.cwd(), 'public', 'uploads', 'temp');
 
 function ensureLocalTempDir(): void {
-  if (!fs.existsSync(LOCAL_TEMP_DIR)) {
-    fs.mkdirSync(LOCAL_TEMP_DIR, { recursive: true });
+  try {
+    if (!fs.existsSync(LOCAL_TEMP_DIR)) {
+      fs.mkdirSync(LOCAL_TEMP_DIR, { recursive: true });
+    }
+  } catch (err) {
+    console.warn('ensureLocalTempDir skipped in read-only environment:', err);
   }
 }
 
@@ -69,7 +76,11 @@ export async function uploadEvidencePhoto(
   ensureLocalTempDir();
   const filename = `${uniqueId}.${extension}`;
   const filePath = path.join(LOCAL_TEMP_DIR, filename);
-  fs.writeFileSync(filePath, buffer);
+  try {
+    fs.writeFileSync(filePath, buffer);
+  } catch (err) {
+    console.warn('Local file write skipped:', err);
+  }
 
   return {
     url: `/uploads/temp/${filename}`,
@@ -96,9 +107,11 @@ export async function deleteEvidencePhoto(publicId: string): Promise<boolean> {
 
     // Local file fallback
     const localPath = path.join(LOCAL_TEMP_DIR, publicId);
-    if (fs.existsSync(localPath)) {
-      fs.unlinkSync(localPath);
-    }
+    try {
+      if (fs.existsSync(localPath)) {
+        fs.unlinkSync(localPath);
+      }
+    } catch {}
     await markCleanupCompleted(publicId);
     return true;
   } catch (error) {
