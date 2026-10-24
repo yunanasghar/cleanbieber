@@ -22,7 +22,7 @@ export async function analyzeCleaningEvidence(
   taskName: TaskType
 ): Promise<GeminiAnalysisResult> {
   const apiKey = process.env.GEMINI_API_KEY;
-  const modelName = process.env.GEMINI_MODEL || 'gemini-1.5-flash';
+  const modelName = process.env.GEMINI_MODEL || 'gemini-3.5-flash';
 
   if (!apiKey) {
     return {
