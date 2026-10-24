@@ -14,6 +14,7 @@ import {
   Eye,
   RefreshCw,
   AlertCircle,
+  Send,
 } from 'lucide-react';
 import TaskBadge from '@/components/TaskBadge';
 import StatusBadge from '@/components/StatusBadge';
@@ -27,6 +28,8 @@ export default function AdminDashboardPage() {
   const [allLogs, setAllLogs] = useState<AttendanceRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedSubmission, setSelectedSubmission] = useState<AttendanceRecord | null>(null);
+  const [sendingBroadcast, setSendingBroadcast] = useState(false);
+  const [broadcastNotice, setBroadcastNotice] = useState<string | null>(null);
 
   const [dateInfo, setDateInfo] = useState({
     isoWeek: 18,
@@ -91,6 +94,25 @@ export default function AdminDashboardPage() {
     setAllLogs((prev) => prev.map((l) => (l.id === updated.id ? updated : l)));
   };
 
+  const handleSendBriefing = async () => {
+    setBroadcastNotice(null);
+    setSendingBroadcast(true);
+    try {
+      const res = await fetch('/api/admin/broadcast-briefing', { method: 'POST' });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'Gagal mengirim laporan briefing.');
+      }
+      setBroadcastNotice(
+        `Laporan briefing harian berhasil dikirim ke ${data.totalRecipients} nomor admin WhatsApp!`
+      );
+    } catch (err) {
+      setBroadcastNotice(err instanceof Error ? err.message : 'Gagal mengirim laporan briefing.');
+    } finally {
+      setSendingBroadcast(false);
+    }
+  };
+
   return (
     <div className="p-3 sm:p-6 lg:p-8 space-y-6 max-w-7xl w-full mx-auto min-w-0 overflow-x-hidden">
       {/* Top Header Bar matching Mockup */}
@@ -104,7 +126,22 @@ export default function AdminDashboardPage() {
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
+          <button
+            onClick={handleSendBriefing}
+            disabled={sendingBroadcast}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold shadow-2xs transition-colors"
+            title="Kirim evaluasi piket hari ini dan jadwal besok ke nomor WA admin"
+          >
+            {sendingBroadcast ? (
+              <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+            ) : (
+              <Send className="w-3.5 h-3.5" />
+            )}
+            <span className="hidden sm:inline">Kirim Briefing WA Pengurus</span>
+            <span className="sm:hidden">Briefing WA</span>
+          </button>
+
           <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-300 shadow-xs">
             <Calendar className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
             <span>{formattedToday}</span>
@@ -119,6 +156,18 @@ export default function AdminDashboardPage() {
           </button>
         </div>
       </div>
+
+      {broadcastNotice && (
+        <div className="p-3.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-xs text-emerald-800 dark:text-emerald-300 flex items-center justify-between gap-2">
+          <span>{broadcastNotice}</span>
+          <button
+            onClick={() => setBroadcastNotice(null)}
+            className="text-xs font-bold text-emerald-600 hover:text-emerald-800"
+          >
+            Tutup
+          </button>
+        </div>
+      )}
 
       {/* 4 Stat Cards matching Mockup */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">

@@ -46,6 +46,7 @@ export interface AdminUser {
 
 export interface SystemSettingsRecord {
   adminWhatsAppNumber: string;
+  adminWhatsAppNumbers: string[];
   fonnteTokenConfigured: boolean;
   cloudinaryConfigured: boolean;
   geminiConfigured: boolean;

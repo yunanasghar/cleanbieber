@@ -1,15 +1,20 @@
 import crypto from 'node:crypto';
 import { NextRequest, NextResponse, connection } from 'next/server';
-import { getStudents, getSystemSettings, hasNotificationBeenSent, recordNotificationLog } from '@/lib/db';
+import {
+  getStudents,
+  getAttendanceLogs,
+  getSystemSettings,
+  hasNotificationBeenSent,
+  recordNotificationLog,
+} from '@/lib/db';
 import { getISOWeekInfo, getAssignedTask } from '@/lib/rotation';
-import { sendWhatsAppMessage, buildDailyReminderText } from '@/lib/fonnte';
+import { buildAdminDailyBriefingText, sendWhatsAppToMultiple } from '@/lib/fonnte';
 
 function verifyCronSecret(req: NextRequest): boolean {
   const authHeader = req.headers.get('authorization');
   const cronSecret = process.env.CRON_SECRET;
 
   if (!cronSecret) {
-    // If CRON_SECRET is not set in development, reject to prevent unauthorized triggers
     return process.env.NODE_ENV === 'development';
   }
 
@@ -35,70 +40,106 @@ export async function GET(req: NextRequest) {
 
   try {
     const settings = await getSystemSettings();
-    const adminPhone = settings.adminWhatsAppNumber;
+    const adminPhones = settings.adminWhatsAppNumbers;
 
-    // Determine tomorrow's date in Asia/Jakarta
+    // 1. Determine Today's date in Asia/Jakarta
     const now = new Date();
-    // Add 24 hours to find tomorrow
-    const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
-    const { isoWeek, isoYear, dayOfWeek, dateString } = getISOWeekInfo(tomorrow);
+    const nowJakartaStr = now.toLocaleDateString('sv-SE', { timeZone: 'Asia/Jakarta' });
+    const todayDateObj = new Date(`${nowJakartaStr}T00:00:00+07:00`);
+    const todayInfo = getISOWeekInfo(todayDateObj);
+    const todayDayOfWeek = todayInfo.dayOfWeek;
+    const activeDutyDay = todayDayOfWeek > 5 ? 1 : todayDayOfWeek;
 
-    // If tomorrow is Saturday (6) or Sunday (7), no duty
-    if (dayOfWeek > 5) {
-      return NextResponse.json({
-        skipped: true,
-        message: `Besok (${dateString}) adalah akhir pekan, tidak ada jadwal piket kelas.`,
-      });
-    }
+    // 2. Determine Tomorrow's duty date
+    let tomorrowDaysToAdd = 1;
+    if (todayDayOfWeek === 5) tomorrowDaysToAdd = 3;
+    else if (todayDayOfWeek === 6) tomorrowDaysToAdd = 2;
 
-    // Check duplicate send
-    const alreadySent = await hasNotificationBeenSent('DAILY_REMINDER', dateString, adminPhone);
+    const tomorrowDateObj = new Date(todayDateObj);
+    tomorrowDateObj.setDate(tomorrowDateObj.getDate() + tomorrowDaysToAdd);
+    const tomorrowJakartaStr = tomorrowDateObj.toLocaleDateString('sv-SE', { timeZone: 'Asia/Jakarta' });
+    const tomorrowInfo = getISOWeekInfo(tomorrowDateObj);
+    const tomorrowDayOfWeek = tomorrowInfo.dayOfWeek > 5 ? 1 : tomorrowInfo.dayOfWeek;
+
+    // Check duplicate send for primary admin
+    const primaryAdmin = adminPhones[0] || '089673038689';
+    const alreadySent = await hasNotificationBeenSent('DAILY_REMINDER', nowJakartaStr, primaryAdmin);
     if (alreadySent) {
       return NextResponse.json({
         skipped: true,
-        message: `Pengingat piket untuk tanggal ${dateString} sudah pernah dikirimkan sebelumnya.`,
+        message: `Laporan briefing harian untuk tanggal ${nowJakartaStr} sudah pernah dikirimkan sebelumnya.`,
       });
     }
 
-    // Get tomorrow's roster
-    const tomorrowStudents = await getStudents(dayOfWeek);
-    if (tomorrowStudents.length === 0) {
-      return NextResponse.json({
-        skipped: true,
-        message: `Tidak ada siswa yang terdaftar pada hari ke-${dayOfWeek}.`,
-      });
-    }
+    // 3. Query Students and Today's Logs
+    const [allStudents, todayLogs] = await Promise.all([
+      getStudents(),
+      getAttendanceLogs({ dateString: nowJakartaStr }),
+    ]);
 
-    // Calculate assignments with shared engine
-    const assignments = tomorrowStudents.map((s) => ({
-      name: s.name,
-      taskName: getAssignedTask(dayOfWeek, s.orderIndex, isoWeek, isoYear),
-    }));
+    // Today's duty evaluation
+    const todayStudents = allStudents
+      .filter((s) => s.dayOfWeek === activeDutyDay)
+      .sort((a, b) => a.orderIndex - b.orderIndex);
 
-    // Build message
-    const message = buildDailyReminderText({
-      targetDate: dateString,
-      dayOfWeek,
-      classLabel: settings.classLabel,
-      assignments,
+    const todayDutyEvaluation = todayStudents.map((s) => {
+      const taskName = getAssignedTask(s.dayOfWeek, s.orderIndex, todayInfo.isoWeek, todayInfo.isoYear);
+      const log = todayLogs.find((l) => l.studentId === s.id);
+
+      let status: 'verified' | 'pending' | 'rejected' | 'unsubmitted' = 'unsubmitted';
+      if (log) {
+        status = log.status;
+      }
+
+      return {
+        name: s.name,
+        taskName,
+        status,
+        rejectionReason: log?.rejectionReason,
+      };
     });
 
-    // Send WhatsApp
-    const sendResult = await sendWhatsAppMessage(adminPhone, message);
+    // Tomorrow's assignments
+    const tomorrowStudents = allStudents
+      .filter((s) => s.dayOfWeek === tomorrowDayOfWeek)
+      .sort((a, b) => a.orderIndex - b.orderIndex);
 
-    await recordNotificationLog(
-      'DAILY_REMINDER',
-      dateString,
-      adminPhone,
-      sendResult.success ? 'SUCCESS' : 'FAILED'
-    );
+    const tomorrowAssignments = tomorrowStudents.map((s) => ({
+      name: s.name,
+      taskName: getAssignedTask(s.dayOfWeek, s.orderIndex, tomorrowInfo.isoWeek, tomorrowInfo.isoYear),
+    }));
+
+    // 4. Build comprehensive text
+    const message = buildAdminDailyBriefingText({
+      todayDate: nowJakartaStr,
+      todayDayOfWeek: activeDutyDay,
+      todayDutyStudents: todayDutyEvaluation,
+      tomorrowDate: tomorrowJakartaStr,
+      tomorrowDayOfWeek,
+      tomorrowAssignments,
+      classLabel: settings.classLabel,
+      appUrl: process.env.APP_URL || 'https://cleanbieber.vercel.app',
+    });
+
+    // 5. Send to all admin phones
+    const sendResult = await sendWhatsAppToMultiple(adminPhones, message);
+
+    for (const phone of adminPhones) {
+      await recordNotificationLog(
+        'DAILY_REMINDER',
+        nowJakartaStr,
+        phone,
+        sendResult.sent > 0 ? 'SUCCESS' : 'FAILED'
+      );
+    }
 
     return NextResponse.json({
-      success: sendResult.success,
-      targetDate: dateString,
-      recipient: adminPhone,
-      fonnteStatus: sendResult.status,
-      message: sendResult.message,
+      success: sendResult.sent > 0,
+      todayDate: nowJakartaStr,
+      tomorrowDate: tomorrowJakartaStr,
+      recipients: adminPhones,
+      sendResult,
+      message,
     });
   } catch (error) {
     console.error('Error in daily reminder cron:', error);

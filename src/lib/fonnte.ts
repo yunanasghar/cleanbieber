@@ -24,8 +24,20 @@ export async function sendWhatsAppMessage(
     };
   }
 
-  // Format phone number to clean string
-  const cleanTarget = targetPhone.replace(/\D/g, '');
+  // Format phone number to clean string (supports comma-separated list of targets)
+  const cleanTarget = targetPhone
+    .split(',')
+    .map((p) => p.replace(/[^\d+]/g, ''))
+    .filter(Boolean)
+    .join(',');
+
+  if (!cleanTarget) {
+    return {
+      success: false,
+      status: 'FAILED',
+      message: 'Nomor WhatsApp tujuan tidak valid.',
+    };
+  }
 
   try {
     const url = 'https://api.fonnte.com/send';
@@ -149,4 +161,161 @@ ${helperList}
 📸 *Upload Bukti:* ${appUrl}/unggah
 
 _Catatan: Pesan ini adalah pengingat pembagian tugas piket, bukan bukti kehadiran piket yang telah selesai. Siswa wajib mengunggah foto bukti kebersihan pada tautan di atas._`;
+}
+
+/**
+ * Send WhatsApp message to multiple admin phone numbers
+ */
+export async function sendWhatsAppToMultiple(
+  recipients: string[],
+  message: string,
+  attachmentBuffer?: Buffer,
+  attachmentFilename?: string
+): Promise<{ total: number; sent: number; results: SendWhatsAppResult[] }> {
+  const cleanRecipients = Array.from(
+    new Set(
+      recipients
+        .map((r) => r.replace(/[^\d+]/g, ''))
+        .filter(Boolean)
+    )
+  );
+
+  if (!cleanRecipients.length) {
+    return {
+      total: 0,
+      sent: 0,
+      results: [
+        {
+          success: false,
+          status: 'FAILED',
+          message: 'Tidak ada nomor WhatsApp tujuan yang valid.',
+        },
+      ],
+    };
+  }
+
+  // Fonnte supports comma-separated targets directly in one call:
+  const targetString = cleanRecipients.join(',');
+  const res = await sendWhatsAppMessage(targetString, message, attachmentBuffer, attachmentFilename);
+  return {
+    total: cleanRecipients.length,
+    sent: res.success ? cleanRecipients.length : 0,
+    results: [res],
+  };
+}
+
+/**
+ * Build the comprehensive daily briefing text for Admins:
+ * - Today's piket performance: who verified, who hasn't confirmed/uploaded (URGENT), who rejected
+ * - Tomorrow's piket schedule & task distribution
+ */
+export function buildAdminDailyBriefingText(params: {
+  todayDate: string; // "YYYY-MM-DD"
+  todayDayOfWeek: number;
+  todayDutyStudents: Array<{
+    name: string;
+    taskName: TaskType;
+    status: 'verified' | 'pending' | 'rejected' | 'unsubmitted';
+    rejectionReason?: string | null;
+  }>;
+  tomorrowDate: string; // "YYYY-MM-DD"
+  tomorrowDayOfWeek: number;
+  tomorrowAssignments: Array<{
+    name: string;
+    taskName: TaskType;
+  }>;
+  classLabel?: string;
+  appUrl?: string;
+}): string {
+  const classLabel = params.classLabel || 'Kelas 10 SIJA B';
+  const appUrl = params.appUrl || process.env.APP_URL || 'https://cleanbieber.vercel.app';
+
+  const todayDayName = DAY_NAMES[params.todayDayOfWeek] || 'Hari Ini';
+  const todayFormatted = formatIndonesianDate(new Date(`${params.todayDate}T00:00:00+07:00`));
+
+  const tomorrowDayName = DAY_NAMES[params.tomorrowDayOfWeek] || 'Besok';
+  const tomorrowFormatted = formatIndonesianDate(new Date(`${params.tomorrowDate}T00:00:00+07:00`));
+
+  // Categorize today's duty students
+  const verifiedList = params.todayDutyStudents.filter((s) => s.status === 'verified');
+  const pendingReviewList = params.todayDutyStudents.filter((s) => s.status === 'pending');
+  const unsubmittedList = params.todayDutyStudents.filter((s) => s.status === 'unsubmitted');
+  const rejectedList = params.todayDutyStudents.filter((s) => s.status === 'rejected');
+
+  // Tomorrow duty breakdown
+  const tomorrowMbg = params.tomorrowAssignments.filter((s) => s.taskName === 'MBG');
+  const tomorrowNyapu = params.tomorrowAssignments.filter((s) => s.taskName === 'Nyapu & Pel');
+  const tomorrowHelper = params.tomorrowAssignments.filter((s) => s.taskName === 'Helper');
+
+  let text = `🧹 *LAPORAN HARIAN PIKET — ${classLabel.toUpperCase()}*\n`;
+  text += `📅 *Hari Ini:* ${todayDayName}, ${todayFormatted}\n`;
+  text += `━━━━━━━━━━━━━━━━━━━━━\n\n`;
+
+  text += `📊 *EVALUASI KEHADIRAN PIKET HARI INI:*\n\n`;
+
+  // 1. Sudah Hadir & Terverifikasi
+  text += `✅ *Hadir & Terverifikasi (${verifiedList.length}/${params.todayDutyStudents.length}):*\n`;
+  if (verifiedList.length > 0) {
+    text += verifiedList.map((s, i) => `  ${i + 1}. ${s.name} [${s.taskName}]`).join('\n') + '\n';
+  } else {
+    text += `  _(Belum ada bukti yang disetujui)_\n`;
+  }
+  text += `\n`;
+
+  // 2. Pending Verifikasi Admin
+  if (pendingReviewList.length > 0) {
+    text += `⏳ *Menunggu Verifikasi Admin (${pendingReviewList.length}):*\n`;
+    text +=
+      pendingReviewList
+        .map((s, i) => `  ${i + 1}. ${s.name} [${s.taskName}] ➔ Foto sudah diunggah, menunggu persetujuan`)
+        .join('\n') + '\n\n';
+  }
+
+  // 3. Belum Konfirmasi / Belum Upload Bukti (Urgent!)
+  text += `⚠️ *BELUM KONFIRMASI / BELUM UPLOAD (${unsubmittedList.length}):*\n`;
+  if (unsubmittedList.length > 0) {
+    text +=
+      unsubmittedList
+        .map((s, i) => `  ${i + 1}. ${s.name} [${s.taskName}] ➔ ❗Segera konfirmasi & upload bukti!`)
+        .join('\n') + '\n';
+  } else {
+    text += `  _(Semua petugas hari ini sudah konfirmasi/upload)_\n`;
+  }
+  text += `\n`;
+
+  // 4. Ditolak / Tidak Piket
+  if (rejectedList.length > 0) {
+    text += `❌ *Tidak Piket / Bukti Ditolak (${rejectedList.length}):*\n`;
+    text +=
+      rejectedList
+        .map(
+          (s, i) =>
+            `  ${i + 1}. ${s.name} [${s.taskName}] ${s.rejectionReason ? `(Alasan: ${s.rejectionReason})` : ''}`
+        )
+        .join('\n') + '\n\n';
+  }
+
+  text += `━━━━━━━━━━━━━━━━━━━━━\n`;
+  text += `📋 *JADWAL PIKET BESOK:* \n`;
+  text += `📅 *${tomorrowDayName}, ${tomorrowFormatted}* (${params.tomorrowAssignments.length} Petugas)\n\n`;
+
+  text += `🍱 *MBG (07:00 - 09:00 WIB):*\n`;
+  text += tomorrowMbg.map((s, i) => `  ${i + 1}. ${s.name}`).join('\n') || '  -';
+  text += `\n\n`;
+
+  text += `🧹 *Nyapu & Pel (15:00 - 16:30 WIB):*\n`;
+  text += tomorrowNyapu.map((s, i) => `  ${i + 1}. ${s.name}`).join('\n') || '  -';
+  text += `\n\n`;
+
+  text += `🤝 *Helper (Koordinator):*\n`;
+  text += tomorrowHelper.map((s, i) => `  ${i + 1}. ${s.name}`).join('\n') || '  -';
+  text += `\n\n`;
+
+  text += `━━━━━━━━━━━━━━━━━━━━━\n`;
+  text += `📲 *Tindakan Cepat:*\n`;
+  text += `• Verifikasi Bukti: ${appUrl}/admin/verifikasi\n`;
+  text += `• Formulir Bukti Siswa: ${appUrl}/unggah\n\n`;
+  text += `_Notifikasi otomatis CleanBieber untuk Pengurus & Admin Kelas 10 SIJA B._`;
+
+  return text;
 }

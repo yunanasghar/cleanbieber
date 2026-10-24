@@ -4,6 +4,19 @@ import { sendWhatsAppMessage } from '@/lib/fonnte';
 import { getSystemSettings, updateSystemSetting, addAuditLog, updateAdminPassword } from '@/lib/db';
 import { hashPassword } from '@/lib/auth';
 
+export async function GET() {
+  try {
+    await requireAdmin();
+    const settings = await getSystemSettings();
+    return NextResponse.json({ settings });
+  } catch (error) {
+    if (error instanceof Error && error.message === 'UNAUTHORIZED') {
+      return NextResponse.json({ error: 'Akses ditolak' }, { status: 401 });
+    }
+    return NextResponse.json({ error: 'Gagal mengambil pengaturan' }, { status: 500 });
+  }
+}
+
 export async function POST(req: NextRequest) {
   try {
     const admin = await requireAdmin();
@@ -22,13 +35,26 @@ export async function POST(req: NextRequest) {
     }
 
     if (action === 'update-settings') {
-      const { adminWhatsAppNumber, allowPublicSubmissions } = body;
-      if (adminWhatsAppNumber) {
+      const { adminWhatsAppNumber, adminWhatsAppNumbers, allowPublicSubmissions } = body;
+      
+      if (adminWhatsAppNumbers !== undefined) {
+        const rawString = Array.isArray(adminWhatsAppNumbers)
+          ? adminWhatsAppNumbers.join(', ')
+          : String(adminWhatsAppNumbers);
+        await updateSystemSetting('adminWhatsAppNumbers', rawString);
+        // Also keep primary number
+        const first = rawString.split(/[\n,;]+/)[0]?.trim();
+        if (first) {
+          await updateSystemSetting('adminWhatsAppNumber', first);
+        }
+      } else if (adminWhatsAppNumber) {
         await updateSystemSetting('adminWhatsAppNumber', adminWhatsAppNumber);
       }
+
       if (allowPublicSubmissions !== undefined) {
         await updateSystemSetting('allowPublicSubmissions', String(allowPublicSubmissions));
       }
+
       await addAuditLog('UPDATE_SETTINGS', admin.id, `Admin ${admin.name} memperbarui pengaturan sistem.`);
       return NextResponse.json({ success: true, message: 'Pengaturan berhasil disimpan.' });
     }

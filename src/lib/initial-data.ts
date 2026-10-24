@@ -50,6 +50,7 @@ export const INITIAL_STUDENTS: Array<Omit<StudentRecord, 'id' | 'createdAt' | 'u
 
 export const INITIAL_SETTINGS = {
   adminWhatsAppNumber: process.env.ADMIN_WHATSAPP_NUMBER || '081234567890',
+  adminWhatsAppNumbers: [process.env.ADMIN_WHATSAPP_NUMBER || '081234567890'].filter(Boolean),
   fonnteTokenConfigured: Boolean(process.env.FONNTE_TOKEN),
   cloudinaryConfigured: Boolean(process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY),
   geminiConfigured: Boolean(process.env.GEMINI_API_KEY),

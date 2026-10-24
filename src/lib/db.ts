@@ -763,8 +763,17 @@ export async function deleteSession(token: string): Promise<void> {
 
 export async function getSystemSettings(): Promise<SystemSettingsRecord> {
   const db = ensureDataFile();
+  const rawNumbers = db.settings.adminWhatsAppNumbers || db.settings.adminWhatsAppNumber || process.env.ADMIN_WHATSAPP_NUMBER || '089673038689';
+  const numbersArray = rawNumbers
+    .split(/[\n,;]+/)
+    .map((s) => s.trim().replace(/[^\d+]/g, ''))
+    .filter(Boolean);
+
+  const primaryNumber = numbersArray[0] || process.env.ADMIN_WHATSAPP_NUMBER || '089673038689';
+
   return {
-    adminWhatsAppNumber: db.settings.adminWhatsAppNumber || process.env.ADMIN_WHATSAPP_NUMBER || '081234567890',
+    adminWhatsAppNumber: primaryNumber,
+    adminWhatsAppNumbers: numbersArray.length ? numbersArray : [primaryNumber],
     fonnteTokenConfigured: Boolean(process.env.FONNTE_TOKEN),
     cloudinaryConfigured: Boolean(process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY),
     geminiConfigured: Boolean(process.env.GEMINI_API_KEY),
