@@ -966,6 +966,18 @@ export async function getSystemSettings(): Promise<SystemSettingsRecord> {
   };
 }
 
+export async function getFonnteToken(): Promise<string | null> {
+  if (isPostgresConfigured()) {
+    try {
+      const record = await prisma.systemSetting.findUnique({ where: { key: 'fonnteToken' } });
+      if (record?.value) return record.value;
+    } catch (e) {
+      console.warn('Prisma getFonnteToken fallback:', e);
+    }
+  }
+  return process.env.FONNTE_TOKEN || null;
+}
+
 export async function updateSystemSetting(key: string, value: string): Promise<void> {
   if (isPostgresConfigured()) {
     try {

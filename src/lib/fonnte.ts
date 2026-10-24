@@ -1,5 +1,6 @@
 import { formatIndonesianDate, DAY_NAMES } from './rotation.ts';
 import type { TaskType } from './rotation.ts';
+import { getFonnteToken } from './db.ts';
 
 export interface SendWhatsAppResult {
   success: boolean;
@@ -14,7 +15,7 @@ export async function sendWhatsAppMessage(
   attachmentBuffer?: Buffer,
   attachmentFilename?: string
 ): Promise<SendWhatsAppResult> {
-  const token = process.env.FONNTE_TOKEN;
+  const token = (await getFonnteToken()) || process.env.FONNTE_TOKEN;
 
   if (!token) {
     return {

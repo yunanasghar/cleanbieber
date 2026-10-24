@@ -42,8 +42,12 @@ export async function POST(req: NextRequest) {
     }
 
     if (action === 'update-settings') {
-      const { adminWhatsAppNumber, adminWhatsAppNumbers, allowPublicSubmissions } = body;
+      const { adminWhatsAppNumber, adminWhatsAppNumbers, fonnteToken, allowPublicSubmissions } = body;
       
+      if (fonnteToken) {
+        await updateSystemSetting('fonnteToken', String(fonnteToken).trim());
+      }
+
       if (adminWhatsAppNumbers !== undefined) {
         const rawString = Array.isArray(adminWhatsAppNumbers)
           ? adminWhatsAppNumbers.join(', ')
