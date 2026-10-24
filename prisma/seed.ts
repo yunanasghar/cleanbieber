@@ -1,3 +1,5 @@
+import fs from 'node:fs';
+import path from 'node:path';
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 import { INITIAL_STUDENTS, INITIAL_SETTINGS } from '../src/lib/initial-data.ts';
@@ -27,9 +29,30 @@ async function main() {
   });
   console.log(`✅ Admin seeded: ${admin.username} (ID: ${admin.id})`);
 
-  // 2. Seed 36 Students idempotently
+  // 2. Determine student data source (prefer .data/db.json if edited, fallback to INITIAL_STUDENTS)
+  let studentSource: Array<{ name: string; dayOfWeek: number; orderIndex: number; phoneNumber?: string | null }> = INITIAL_STUDENTS;
+  const localDbPath = path.join(process.cwd(), '.data', 'db.json');
+  if (fs.existsSync(localDbPath)) {
+    try {
+      const fileContent = fs.readFileSync(localDbPath, 'utf-8');
+      const parsed = JSON.parse(fileContent);
+      if (Array.isArray(parsed.students) && parsed.students.length > 0) {
+        studentSource = parsed.students.map((s: any) => ({
+          name: s.name,
+          dayOfWeek: Number(s.dayOfWeek),
+          orderIndex: Number(s.orderIndex),
+          phoneNumber: s.phoneNumber || null,
+        }));
+        console.log(`📁 Loaded ${studentSource.length} students directly from .data/db.json`);
+      }
+    } catch (err) {
+      console.warn('⚠️ Could not parse .data/db.json, using INITIAL_STUDENTS default:', err);
+    }
+  }
+
+  // Seed students idempotently
   let studentCount = 0;
-  for (const s of INITIAL_STUDENTS) {
+  for (const s of studentSource) {
     await prisma.student.upsert({
       where: {
         dayOfWeek_orderIndex: {
@@ -50,7 +73,7 @@ async function main() {
     });
     studentCount++;
   }
-  console.log(`✅ Exactly ${studentCount} students seeded across Monday to Friday.`);
+  console.log(`✅ Exactly ${studentCount} students synced to Supabase database.`);
 
   // 3. Seed System Settings
   for (const [key, value] of Object.entries(INITIAL_SETTINGS)) {
