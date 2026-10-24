@@ -1,0 +1,135 @@
+// Prisma schema for CleanBieber - Class Cleaning Management System
+// Kelas 10 SIJA B (36 Siswa)
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Admin {
+  id            String         @id @default(uuid())
+  username      String         @unique
+  passwordHash  String
+  name          String?        @default("Administrator")
+  phoneNumber   String?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  sessions      AdminSession[]
+  verifications AttendanceLog[] @relation("VerifiedByAdmin")
+  auditLogs     AuditLog[]
+
+  @@map("admins")
+}
+
+model AdminSession {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  adminId   String
+  admin     Admin    @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([adminId])
+  @@index([expiresAt])
+  @@map("admin_sessions")
+}
+
+model Student {
+  id             String          @id @default(uuid())
+  name           String
+  dayOfWeek      Int             // 1 = Senin, 2 = Selasa, 3 = Rabu, 4 = Kamis, 5 = Jumat
+  orderIndex     Int             // 0..6 (Senin-Kamis) or 0..7 (Jumat)
+  phoneNumber    String?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  attendanceLogs AttendanceLog[]
+
+  @@unique([dayOfWeek, orderIndex])
+  @@index([dayOfWeek])
+  @@map("students")
+}
+
+model AttendanceLog {
+  id                String    @id @default(uuid())
+  date              DateTime  // Date representing the duty day
+  dateString        String    // ISO formatted "YYYY-MM-DD" in Asia/Jakarta
+  studentId         String
+  student           Student   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  taskName          String    // "MBG" | "Nyapu & Pel" | "Helper"
+  tempPhotoUrl      String?
+  photoPublicId     String?
+  aiStatus          String?   // "VALID" | "INVALID" | "UNAVAILABLE" | "FAILED"
+  aiConfidence      Float?
+  aiDetectedItems   String?   // JSON array string e.g. ["sapu", "lantai", "tempat sampah"]
+  aiReason          String?
+  status            String    @default("pending") // "pending" | "verified" | "rejected"
+  rejectionReason   String?
+  verifiedAt        DateTime?
+  verifiedByAdminId String?
+  verifiedByAdmin   Admin?    @relation("VerifiedByAdmin", fields: [verifiedByAdminId], references: [id])
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  @@unique([studentId, dateString, taskName])
+  @@index([dateString])
+  @@index([status])
+  @@map("attendance_logs")
+}
+
+model SystemSetting {
+  id          String   @id @default(uuid())
+  key         String   @unique
+  value       String
+  description String?
+  updatedAt   DateTime @updatedAt
+
+  @@map("system_settings")
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  adminId   String?
+  admin     Admin?   @relation(fields: [adminId], references: [id])
+  action    String
+  details   String?
+  ipAddress String?
+  createdAt DateTime @default(now())
+
+  @@index([action])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+model NotificationLog {
+  id              String   @id @default(uuid())
+  type            String   // "DAILY_REMINDER" | "WEEKLY_RECAP" | "TEST"
+  targetDate      String   // "YYYY-MM-DD"
+  recipient       String
+  status          String   // "SUCCESS" | "FAILED"
+  message         String?
+  responsePayload String?
+  createdAt       DateTime @default(now())
+
+  @@unique([type, targetDate, recipient])
+  @@index([targetDate])
+  @@map("notification_logs")
+}
+
+model StorageCleanupQueue {
+  id            String   @id @default(uuid())
+  photoPublicId String   @unique
+  provider      String   @default("cloudinary")
+  retryCount    Int      @default(0)
+  lastError     String?
+  status        String   @default("PENDING") // "PENDING" | "FAILED" | "CLEANED"
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([status])
+  @@map("storage_cleanup_queue")
+}

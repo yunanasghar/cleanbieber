@@ -1,0 +1,16 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/daily-reminder",
+      "schedule": "0 13 * * 0-4"
+    },
+    {
+      "path": "/api/cron/weekly-recap",
+      "schedule": "0 10 * * 5"
+    },
+    {
+      "path": "/api/cron/cleanup-retry",
+      "schedule": "*/30 * * * *"
+    }
+  ]
+}
