@@ -215,7 +215,7 @@ export function buildAdminDailyBriefingText(params: {
   todayDutyStudents: Array<{
     name: string;
     taskName: TaskType;
-    status: 'verified' | 'pending' | 'rejected' | 'unsubmitted';
+    status: 'verified' | 'pending' | 'rejected' | 'excused' | 'unsubmitted';
     rejectionReason?: string | null;
   }>;
   tomorrowDate: string; // "YYYY-MM-DD"
@@ -238,6 +238,7 @@ export function buildAdminDailyBriefingText(params: {
 
   // Categorize today's duty students
   const verifiedList = params.todayDutyStudents.filter((s) => s.status === 'verified');
+  const excusedList = params.todayDutyStudents.filter((s) => s.status === 'excused');
   const pendingReviewList = params.todayDutyStudents.filter((s) => s.status === 'pending');
   const unsubmittedList = params.todayDutyStudents.filter((s) => s.status === 'unsubmitted');
   const rejectedList = params.todayDutyStudents.filter((s) => s.status === 'rejected');
@@ -271,7 +272,19 @@ export function buildAdminDailyBriefingText(params: {
         .join('\n') + '\n\n';
   }
 
-  // 3. Belum Konfirmasi / Belum Upload Bukti (Urgent!)
+  // 3. Izin / Sakit Resmi (Dispensasi)
+  if (excusedList.length > 0) {
+    text += `🏥 *Izin / Sakit Resmi (${excusedList.length}):*\n`;
+    text +=
+      excusedList
+        .map(
+          (s, i) =>
+            `  ${i + 1}. ${s.name} [${s.taskName}] ➔ ${s.rejectionReason || 'Izin/Sakit resmi terkonfirmasi'}`
+        )
+        .join('\n') + '\n\n';
+  }
+
+  // 4. Belum Konfirmasi / Belum Upload Bukti (Urgent!)
   text += `⚠️ *BELUM KONFIRMASI / BELUM UPLOAD (${unsubmittedList.length}):*\n`;
   if (unsubmittedList.length > 0) {
     text +=

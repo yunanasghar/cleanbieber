@@ -75,7 +75,13 @@ export async function generateWeeklyExcelReport(data: WeeklyReportData): Promise
       log.studentName || 'Siswa',
       formatIndonesianDate(new Date(`${log.dateString}T00:00:00+07:00`)),
       log.taskName,
-      log.status === 'verified' ? 'TERVERIFIKASI' : log.status === 'rejected' ? 'DITOLAK' : 'MENUNGGU VERIFIKASI',
+      log.status === 'verified'
+        ? 'TERVERIFIKASI'
+        : log.status === 'rejected'
+        ? 'DITOLAK'
+        : log.status === 'excused'
+        ? `IZIN/SAKIT (${log.rejectionReason || 'Resmi'})`
+        : 'MENUNGGU VERIFIKASI',
       log.aiStatus ? `${log.aiStatus} (${Math.round((log.aiConfidence || 0) * 100)}%)` : 'Belum Dianalisis',
       log.verifiedAt ? formatIndonesianDate(new Date(log.verifiedAt)) : '-',
     ]);
@@ -101,6 +107,8 @@ export async function generateWeeklyExcelReport(data: WeeklyReportData): Promise
           cell.font = { name: 'Arial', size: 9, bold: true, color: { argb: 'FF16A34A' } };
         } else if (log.status === 'rejected') {
           cell.font = { name: 'Arial', size: 9, bold: true, color: { argb: 'FFDC2626' } };
+        } else if (log.status === 'excused') {
+          cell.font = { name: 'Arial', size: 9, bold: true, color: { argb: 'FF2563EB' } };
         } else {
           cell.font = { name: 'Arial', size: 9, bold: true, color: { argb: 'FFD97706' } };
         }
@@ -114,7 +122,7 @@ export async function generateWeeklyExcelReport(data: WeeklyReportData): Promise
     { width: 28 },
     { width: 26 },
     { width: 16 },
-    { width: 24 },
+    { width: 28 },
     { width: 22 },
     { width: 24 },
   ];
@@ -128,7 +136,7 @@ export async function generateWeeklyExcelReport(data: WeeklyReportData): Promise
   sumTitle.alignment = { vertical: 'middle', horizontal: 'center' };
   summarySheet.getRow(1).height = 26;
 
-  const sumHeaders = ['Kategori Tugas', 'Total Pengajuan', 'Sudah Diverifikasi', 'Ditolak', 'Menunggu'];
+  const sumHeaders = ['Kategori Tugas', 'Total Pengajuan', 'Sudah Diverifikasi', 'Izin / Sakit', 'Ditolak', 'Menunggu'];
   const sumHeaderRow = summarySheet.addRow(sumHeaders);
   sumHeaderRow.height = 24;
   sumHeaderRow.eachCell((cell) => {
@@ -141,10 +149,11 @@ export async function generateWeeklyExcelReport(data: WeeklyReportData): Promise
   tasks.forEach((t) => {
     const subset = data.attendanceLogs.filter((l) => l.taskName === t);
     const verified = subset.filter((l) => l.status === 'verified').length;
+    const excused = subset.filter((l) => l.status === 'excused').length;
     const rejected = subset.filter((l) => l.status === 'rejected').length;
     const pending = subset.filter((l) => l.status === 'pending').length;
 
-    const row = summarySheet.addRow([t, subset.length, verified, rejected, pending]);
+    const row = summarySheet.addRow([t, subset.length, verified, excused, rejected, pending]);
     row.height = 20;
     row.eachCell((cell) => {
       cell.alignment = { vertical: 'middle', horizontal: 'center' };
@@ -156,6 +165,7 @@ export async function generateWeeklyExcelReport(data: WeeklyReportData): Promise
     { width: 20 },
     { width: 18 },
     { width: 20 },
+    { width: 16 },
     { width: 16 },
     { width: 16 },
   ];

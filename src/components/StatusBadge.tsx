@@ -1,6 +1,6 @@
 import React from 'react';
 import type { SubmissionStatus } from '@/lib/types';
-import { CheckCircle2, Clock, XCircle } from 'lucide-react';
+import { CheckCircle2, Clock, XCircle, HeartHandshake } from 'lucide-react';
 
 export default function StatusBadge({
   status,
@@ -28,6 +28,15 @@ export default function StatusBadge({
         >
           <XCircle className="w-3.5 h-3.5 text-rose-600 dark:text-rose-400" />
           <span>Rejected</span>
+        </span>
+      );
+    case 'excused':
+      return (
+        <span
+          className={`inline-flex items-center gap-1.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-950/40 dark:text-blue-400 dark:border-blue-800 ${sizeClass}`}
+        >
+          <HeartHandshake className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+          <span>Sakit / Izin</span>
         </span>
       );
     case 'pending':

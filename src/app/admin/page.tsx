@@ -15,11 +15,13 @@ import {
   RefreshCw,
   AlertCircle,
   Send,
+  HeartHandshake,
 } from 'lucide-react';
 import TaskBadge from '@/components/TaskBadge';
 import StatusBadge from '@/components/StatusBadge';
 import VerificationModal from '@/components/VerificationModal';
-import { getISOWeekInfo, formatIndonesianDate, getAssignedTask, DAY_NAMES } from '@/lib/rotation';
+import ExcuseModal from '@/components/ExcuseModal';
+import { getISOWeekInfo, formatIndonesianDate, getAssignedTask, DAY_NAMES, TaskType } from '@/lib/rotation';
 import type { StudentRecord, AttendanceRecord } from '@/lib/types';
 
 export default function AdminDashboardPage() {
@@ -28,6 +30,12 @@ export default function AdminDashboardPage() {
   const [allLogs, setAllLogs] = useState<AttendanceRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedSubmission, setSelectedSubmission] = useState<AttendanceRecord | null>(null);
+  const [excuseModalStudent, setExcuseModalStudent] = useState<{
+    id: string;
+    name: string;
+    taskName: TaskType;
+  } | null>(null);
+  const [excuseModalLog, setExcuseModalLog] = useState<AttendanceRecord | null>(null);
   const [sendingBroadcast, setSendingBroadcast] = useState(false);
   const [broadcastNotice, setBroadcastNotice] = useState<string | null>(null);
 
@@ -88,10 +96,38 @@ export default function AdminDashboardPage() {
   const dutyTodayCount = todayStudents.length;
   const verifiedTodayCount = todayLogs.filter((l) => l.status === 'verified').length;
   const pendingTodayCount = todayLogs.filter((l) => l.status === 'pending').length;
+  const excusedTodayCount = todayLogs.filter((l) => l.status === 'excused').length;
 
   const handleModerated = (updated: AttendanceRecord) => {
     setTodayLogs((prev) => prev.map((l) => (l.id === updated.id ? updated : l)));
     setAllLogs((prev) => prev.map((l) => (l.id === updated.id ? updated : l)));
+  };
+
+  const handleExcuseSuccess = (record?: AttendanceRecord) => {
+    if (record) {
+      setTodayLogs((prev) => {
+        const idx = prev.findIndex((l) => l.studentId === record.studentId && l.taskName === record.taskName);
+        if (idx !== -1) {
+          const next = [...prev];
+          next[idx] = record;
+          return next;
+        }
+        return [record, ...prev];
+      });
+      setAllLogs((prev) => {
+        const idx = prev.findIndex((l) => l.studentId === record.studentId && l.taskName === record.taskName);
+        if (idx !== -1) {
+          const next = [...prev];
+          next[idx] = record;
+          return next;
+        }
+        return [record, ...prev];
+      });
+    } else if (excuseModalLog) {
+      setTodayLogs((prev) => prev.filter((l) => l.id !== excuseModalLog.id));
+      setAllLogs((prev) => prev.filter((l) => l.id !== excuseModalLog.id));
+    }
+    loadDashboardData();
   };
 
   const handleSendBriefing = async () => {
@@ -296,28 +332,39 @@ export default function AdminDashboardPage() {
                           ) : (
                             <span className="text-[10px] text-slate-400">Belum Ada Bukti</span>
                           )}
+                          {log?.status === 'excused' && log.rejectionReason && (
+                            <span className="text-[10px] text-blue-600 dark:text-blue-400 block font-medium truncate max-w-[120px]">
+                              {log.rejectionReason}
+                            </span>
+                          )}
                         </div>
                       </div>
                     </div>
 
-                    <div className="shrink-0">
-                      {log?.tempPhotoUrl ? (
+                    <div className="shrink-0 flex items-center gap-1.5">
+                      {log?.tempPhotoUrl && (
                         <button
                           onClick={() => setSelectedSubmission(log)}
-                          className="w-10 h-10 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 bg-slate-100 shadow-2xs hover:opacity-85 transition-opacity"
+                          className="w-9 h-9 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 bg-slate-100 shadow-2xs hover:opacity-85 transition-opacity"
                         >
                           <img src={log.tempPhotoUrl} alt="Bukti" className="w-full h-full object-cover" />
                         </button>
-                      ) : log ? (
-                        <button
-                          onClick={() => setSelectedSubmission(log)}
-                          className="p-2 rounded-xl text-blue-600 bg-blue-50 dark:bg-blue-950/60 dark:text-blue-400 text-xs font-semibold"
-                        >
-                          <Eye className="w-4 h-4" />
-                        </button>
-                      ) : (
-                        <span className="text-slate-300 dark:text-slate-600 text-xs px-2">-</span>
                       )}
+                      <button
+                        onClick={() => {
+                          setExcuseModalStudent({ id: student.id, name: student.name, taskName });
+                          setExcuseModalLog(log || null);
+                        }}
+                        className={`px-2.5 py-1.5 rounded-xl border text-[11px] font-semibold flex items-center gap-1 transition-colors ${
+                          log?.status === 'excused'
+                            ? 'bg-blue-50 border-blue-200 text-blue-700 dark:bg-blue-950/60 dark:border-blue-800 dark:text-blue-300'
+                            : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100'
+                        }`}
+                        title="Tandai Sakit / Izin"
+                      >
+                        <HeartHandshake className="w-3.5 h-3.5 text-blue-500" />
+                        <span>{log?.status === 'excused' ? 'Ubah' : 'Izin'}</span>
+                      </button>
                     </div>
                   </div>
                 );
@@ -334,13 +381,14 @@ export default function AdminDashboardPage() {
                   <th className="py-3 px-4">Nama Siswa</th>
                   <th className="py-3 px-4">Tugas</th>
                   <th className="py-3 px-4">Status</th>
-                  <th className="py-3 px-4 text-center">Foto</th>
+                  <th className="py-3 px-4 text-center">Foto / Keterangan</th>
+                  <th className="py-3 px-4 text-right">Aksi</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                 {todayStudents.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="py-8 text-center text-xs text-slate-400">
+                    <td colSpan={6} className="py-8 text-center text-xs text-slate-400">
                       Tidak ada petugas piket terjadwal.
                     </td>
                   </tr>
@@ -373,7 +421,14 @@ export default function AdminDashboardPage() {
                         </td>
                         <td className="py-3 px-4">
                           {log ? (
-                            <StatusBadge status={log.status} size="sm" />
+                            <div className="space-y-0.5">
+                              <StatusBadge status={log.status} size="sm" />
+                              {log.status === 'excused' && log.rejectionReason && (
+                                <span className="text-[10px] text-blue-600 dark:text-blue-400 block font-medium truncate max-w-[140px]" title={log.rejectionReason}>
+                                  {log.rejectionReason}
+                                </span>
+                              )}
+                            </div>
                           ) : (
                             <span className="inline-flex items-center gap-1 text-xs text-slate-400">
                               <Clock className="w-3 h-3" />
@@ -394,6 +449,11 @@ export default function AdminDashboardPage() {
                                 className="w-full h-full object-cover"
                               />
                             </button>
+                          ) : log?.status === 'excused' ? (
+                            <span className="inline-flex items-center gap-1 text-[11px] font-medium text-blue-600 bg-blue-50 dark:bg-blue-950/50 px-2.5 py-1 rounded-lg">
+                              <HeartHandshake className="w-3.5 h-3.5" />
+                              <span>Sakit / Izin</span>
+                            </span>
                           ) : log ? (
                             <button
                               onClick={() => setSelectedSubmission(log)}
@@ -405,6 +465,23 @@ export default function AdminDashboardPage() {
                           ) : (
                             <span className="text-slate-300 dark:text-slate-600 text-xs">-</span>
                           )}
+                        </td>
+                        <td className="py-3 px-4 text-right">
+                          <button
+                            onClick={() => {
+                              setExcuseModalStudent({ id: student.id, name: student.name, taskName });
+                              setExcuseModalLog(log || null);
+                            }}
+                            className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors ${
+                              log?.status === 'excused'
+                                ? 'bg-blue-50 hover:bg-blue-100 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300'
+                                : 'bg-slate-100 hover:bg-blue-50 hover:text-blue-600 text-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-blue-950/60'
+                            }`}
+                            title={log?.status === 'excused' ? 'Ubah status izin/sakit' : 'Tandai siswa izin atau sakit'}
+                          >
+                            <HeartHandshake className="w-3.5 h-3.5 text-blue-500" />
+                            <span>{log?.status === 'excused' ? 'Ubah Izin' : 'Izin/Sakit'}</span>
+                          </button>
                         </td>
                       </tr>
                     );
@@ -495,6 +572,19 @@ export default function AdminDashboardPage() {
         submission={selectedSubmission}
         onClose={() => setSelectedSubmission(null)}
         onModerated={handleModerated}
+      />
+
+      {/* Excuse Modal (Sakit / Izin) */}
+      <ExcuseModal
+        isOpen={Boolean(excuseModalStudent)}
+        onClose={() => {
+          setExcuseModalStudent(null);
+          setExcuseModalLog(null);
+        }}
+        student={excuseModalStudent}
+        dateString={dateInfo.dateString}
+        existingRecord={excuseModalLog}
+        onSuccess={handleExcuseSuccess}
       />
     </div>
   );

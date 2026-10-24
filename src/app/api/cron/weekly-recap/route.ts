@@ -64,6 +64,7 @@ export async function GET(req: NextRequest) {
     const totalSubmissions = logs.length;
     const verifiedCount = logs.filter((l) => l.status === 'verified').length;
     const rejectedCount = logs.filter((l) => l.status === 'rejected').length;
+    const excusedCount = logs.filter((l) => l.status === 'excused').length;
     const pendingCount = logs.filter((l) => l.status === 'pending').length;
 
     // Task breakdown
@@ -96,6 +97,7 @@ export async function GET(req: NextRequest) {
 
 📈 *RINGKASAN KEHADIRAN KELAS (Total 36 Siswa):*
 • ✅ Hadir & Terverifikasi: *${verifiedCount} Siswa* (${percent}%)
+• 🏥 Izin / Sakit Resmi: *${excusedCount} Siswa*
 • ⏳ Menunggu Verifikasi: ${pendingCount} Siswa
 • ❌ Tidak Hadir / Ditolak: ${rejectedCount} Siswa
 

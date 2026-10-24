@@ -547,7 +547,7 @@ export async function createAttendanceLog(data: {
 export async function moderateAttendanceLog(
   id: string,
   data: {
-    status: 'verified' | 'rejected';
+    status: 'verified' | 'rejected' | 'excused';
     rejectionReason?: string;
     adminId: string;
     adminName: string;
@@ -614,6 +614,164 @@ export async function moderateAttendanceLog(
 
   saveDb(db);
   return db.attendanceLogs[idx];
+}
+
+/**
+ * Mark a student as officially excused (Sakit / Izin) for a duty day
+ */
+export async function markStudentExcused(data: {
+  studentId: string;
+  dateString: string;
+  taskName: TaskType;
+  excuseType: 'sakit' | 'izin';
+  reason?: string;
+  adminId: string;
+  adminName: string;
+}): Promise<AttendanceRecord> {
+  const fullReason = `${data.excuseType === 'sakit' ? 'Sakit' : 'Izin'}${data.reason ? `: ${data.reason.trim()}` : ''}`;
+  const now = new Date();
+  const dateObj = new Date(`${data.dateString}T00:00:00+07:00`);
+
+  if (isPostgresConfigured()) {
+    try {
+      const existing = await prisma.attendanceLog.findUnique({
+        where: {
+          studentId_dateString_taskName: {
+            studentId: data.studentId,
+            dateString: data.dateString,
+            taskName: data.taskName,
+          },
+        },
+      });
+
+      let updated;
+      if (existing) {
+        updated = await prisma.attendanceLog.update({
+          where: { id: existing.id },
+          data: {
+            status: 'excused',
+            rejectionReason: fullReason,
+            verifiedAt: now,
+            verifiedByAdminId: data.adminId,
+            tempPhotoUrl: null,
+            photoPublicId: null,
+          },
+          include: { student: true, verifiedByAdmin: true },
+        });
+      } else {
+        updated = await prisma.attendanceLog.create({
+          data: {
+            studentId: data.studentId,
+            date: dateObj,
+            dateString: data.dateString,
+            taskName: data.taskName,
+            status: 'excused',
+            rejectionReason: fullReason,
+            verifiedAt: now,
+            verifiedByAdminId: data.adminId,
+          },
+          include: { student: true, verifiedByAdmin: true },
+        });
+      }
+
+      return {
+        id: updated.id,
+        date: updated.date.toISOString(),
+        dateString: updated.dateString,
+        studentId: updated.studentId,
+        studentName: updated.student.name,
+        dayOfWeek: updated.student.dayOfWeek,
+        taskName: updated.taskName as TaskType,
+        tempPhotoUrl: null,
+        photoPublicId: null,
+        aiStatus: null,
+        aiConfidence: null,
+        aiDetectedItems: null,
+        aiReason: null,
+        status: 'excused',
+        rejectionReason: fullReason,
+        verifiedAt: updated.verifiedAt?.toISOString() || now.toISOString(),
+        verifiedByAdminId: data.adminId,
+        verifiedByAdminName: data.adminName,
+        createdAt: updated.createdAt.toISOString(),
+        updatedAt: updated.updatedAt.toISOString(),
+      };
+    } catch (e) {
+      console.warn('Prisma markStudentExcused fallback:', e);
+    }
+  }
+
+  // Local JSON fallback
+  const db = ensureDataFile();
+  const student = db.students.find((s) => s.id === data.studentId);
+  const idx = db.attendanceLogs.findIndex(
+    (l) => l.studentId === data.studentId && l.dateString === data.dateString && l.taskName === data.taskName
+  );
+
+  if (idx !== -1) {
+    db.attendanceLogs[idx] = {
+      ...db.attendanceLogs[idx],
+      status: 'excused',
+      rejectionReason: fullReason,
+      verifiedAt: now.toISOString(),
+      verifiedByAdminId: data.adminId,
+      verifiedByAdminName: data.adminName,
+      updatedAt: now.toISOString(),
+      tempPhotoUrl: null,
+      photoPublicId: null,
+    };
+    saveDb(db);
+    return db.attendanceLogs[idx];
+  } else {
+    const newRecord: AttendanceRecord = {
+      id: `att-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+      date: dateObj.toISOString(),
+      dateString: data.dateString,
+      studentId: data.studentId,
+      studentName: student?.name || 'Siswa',
+      dayOfWeek: student?.dayOfWeek || 1,
+      taskName: data.taskName,
+      tempPhotoUrl: null,
+      photoPublicId: null,
+      aiStatus: null,
+      aiConfidence: null,
+      aiDetectedItems: null,
+      aiReason: null,
+      status: 'excused',
+      rejectionReason: fullReason,
+      verifiedAt: now.toISOString(),
+      verifiedByAdminId: data.adminId,
+      verifiedByAdminName: data.adminName,
+      createdAt: now.toISOString(),
+      updatedAt: now.toISOString(),
+    };
+    db.attendanceLogs.unshift(newRecord);
+    saveDb(db);
+    return newRecord;
+  }
+}
+
+/**
+ * Remove an excuse record (reset student back to pending)
+ */
+export async function removeStudentExcuse(id: string): Promise<boolean> {
+  if (isPostgresConfigured()) {
+    try {
+      await prisma.attendanceLog.delete({ where: { id } });
+      return true;
+    } catch (e) {
+      console.warn('Prisma removeStudentExcuse fallback:', e);
+    }
+  }
+
+  const db = ensureDataFile();
+  const beforeLen = db.attendanceLogs.length;
+  db.attendanceLogs = db.attendanceLogs.filter((l) => l.id !== id);
+  if (db.attendanceLogs.length !== beforeLen) {
+    saveDb(db);
+    return true;
+  }
+  return false;
 }
 
 // ======================== ADMIN & AUTH REPOSITORY ========================

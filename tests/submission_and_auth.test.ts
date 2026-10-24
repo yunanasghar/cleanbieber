@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { checkLoginRateLimit, hashPassword, verifyPassword } from '../src/lib/auth.ts';
 import { getISOWeekInfo, getAssignedTask, getWeekDateRange } from '../src/lib/rotation.ts';
 import { generateWeeklyExcelReport } from '../src/lib/excel.ts';
-import { buildDailyReminderText } from '../src/lib/fonnte.ts';
+import { buildDailyReminderText, buildAdminDailyBriefingText } from '../src/lib/fonnte.ts';
 import type { AttendanceRecord, StudentRecord } from '../src/lib/types.ts';
 
 describe('CleanBieber Authentication & Security Tests', () => {
@@ -61,6 +61,31 @@ describe('CleanBieber Daily Reminder & WhatsApp Tests', () => {
     assert.ok(text.includes('MBG (Makanan Bergizi Gratis)'));
     assert.ok(text.includes('bukan bukti kehadiran piket'));
   });
+
+  it('builds admin briefing text clearly separating verified, excused, and unsubmitted students', () => {
+    const briefing = buildAdminDailyBriefingText({
+      todayDate: '2026-10-24',
+      todayDayOfWeek: 1,
+      todayDutyStudents: [
+        { name: 'Ahmad Rizki', taskName: 'MBG', status: 'verified' },
+        { name: 'Siti Nurhaliza', taskName: 'MBG', status: 'excused', rejectionReason: 'Sakit: Demam tinggi' },
+        { name: 'Budi Santoso', taskName: 'Nyapu & Pel', status: 'unsubmitted' },
+      ],
+      tomorrowDate: '2026-10-25',
+      tomorrowDayOfWeek: 2,
+      tomorrowAssignments: [
+        { name: 'Fajar Ardiansyah', taskName: 'MBG' },
+      ],
+      classLabel: 'Kelas 10 SIJA B',
+    });
+
+    assert.ok(briefing.includes('LAPORAN HARIAN PIKET — KELAS 10 SIJA B'));
+    assert.ok(briefing.includes('Hadir & Terverifikasi (1/3)'));
+    assert.ok(briefing.includes('Izin / Sakit Resmi (1)'));
+    assert.ok(briefing.includes('Siti Nurhaliza [MBG] ➔ Sakit: Demam tinggi'));
+    assert.ok(briefing.includes('BELUM KONFIRMASI / BELUM UPLOAD (1)'));
+    assert.ok(briefing.includes('Budi Santoso [Nyapu & Pel]'));
+  });
 });
 
 describe('CleanBieber Excel Report Generation Tests', () => {
@@ -93,6 +118,28 @@ describe('CleanBieber Excel Report Generation Tests', () => {
         aiReason: 'Rapi dan bersih',
         status: 'verified',
         rejectionReason: null,
+        verifiedAt: new Date().toISOString(),
+        verifiedByAdminId: 'a1',
+        verifiedByAdminName: 'Admin',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      },
+      {
+        id: 'l2',
+        date: '2025-04-28T00:00:00.000Z',
+        dateString: '2025-04-28',
+        studentId: 's2',
+        studentName: 'Siti Nurhaliza',
+        dayOfWeek: 1,
+        taskName: 'MBG',
+        tempPhotoUrl: null,
+        photoPublicId: null,
+        aiStatus: null,
+        aiConfidence: null,
+        aiDetectedItems: null,
+        aiReason: null,
+        status: 'excused',
+        rejectionReason: 'Sakit: Demam tinggi (surat dokter)',
         verifiedAt: new Date().toISOString(),
         verifiedByAdminId: 'a1',
         verifiedByAdminName: 'Admin',

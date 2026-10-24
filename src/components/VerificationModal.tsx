@@ -12,6 +12,7 @@ import {
   Loader2,
   Calendar,
   Layers,
+  HeartHandshake,
 } from 'lucide-react';
 import TaskBadge from './TaskBadge';
 import StatusBadge from './StatusBadge';
@@ -31,12 +32,15 @@ export default function VerificationModal({
 }: VerificationModalProps) {
   const [rejecting, setRejecting] = useState(false);
   const [rejectionReason, setRejectionReason] = useState('');
+  const [excusing, setExcusing] = useState(false);
+  const [excuseType, setExcuseType] = useState<'sakit' | 'izin'>('sakit');
+  const [excuseReason, setExcuseReason] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
 
   if (!submission) return null;
 
-  const handleModerate = async (status: 'verified' | 'rejected') => {
+  const handleModerate = async (status: 'verified' | 'rejected' | 'excused') => {
     setActionError(null);
     if (status === 'rejected' && !rejectionReason.trim()) {
       setActionError('Alasan penolakan wajib diisi agar siswa memahami evaluasi bukti.');
@@ -50,7 +54,12 @@ export default function VerificationModal({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           status,
-          rejectionReason: status === 'rejected' ? rejectionReason : undefined,
+          rejectionReason:
+            status === 'rejected'
+              ? rejectionReason
+              : status === 'excused'
+              ? `${excuseType === 'sakit' ? 'Sakit' : 'Izin'}${excuseReason ? ': ' + excuseReason.trim() : ''}`
+              : undefined,
         }),
       });
 
@@ -220,6 +229,63 @@ export default function VerificationModal({
             </p>
           </div>
 
+          {/* Excusing input form */}
+          {excusing && (
+            <div className="p-4 rounded-xl bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-900 space-y-3">
+              <label className="block text-xs font-bold text-blue-900 dark:text-blue-200">
+                Tandai Sebagai Sakit / Izin Resmi
+              </label>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setExcuseType('sakit')}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-all ${
+                    excuseType === 'sakit'
+                      ? 'bg-rose-50 border-rose-400 text-rose-700 dark:bg-rose-950/50 dark:text-rose-300'
+                      : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600'
+                  }`}
+                >
+                  🏥 Sakit
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setExcuseType('izin')}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-all ${
+                    excuseType === 'izin'
+                      ? 'bg-blue-100 border-blue-500 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300'
+                      : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600'
+                  }`}
+                >
+                  ✉️ Izin Resmi
+                </button>
+              </div>
+              <input
+                type="text"
+                value={excuseReason}
+                onChange={(e) => setExcuseReason(e.target.value)}
+                placeholder="Keterangan singkat (contoh: Surat dokter / izin keluarga)"
+                className="w-full p-2.5 rounded-lg border border-blue-300 dark:border-blue-800 bg-white dark:bg-slate-900 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              <div className="flex justify-end gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={() => setExcusing(false)}
+                  className="px-3 py-1.5 rounded-lg text-xs font-medium text-slate-600 hover:bg-slate-200 dark:text-slate-300 dark:hover:bg-slate-800"
+                >
+                  Batal
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleModerate('excused')}
+                  disabled={submitting}
+                  className="px-4 py-1.5 rounded-lg text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white transition-colors"
+                >
+                  {submitting ? 'Menyimpan...' : 'Simpan Sakit / Izin'}
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* Rejection reason input form */}
           {rejecting && (
             <div className="p-4 rounded-xl bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900 space-y-2">
@@ -261,8 +327,19 @@ export default function VerificationModal({
           </p>
 
           <div className="flex items-center gap-2 w-full sm:w-auto">
-            {!rejecting && (
+            {!rejecting && !excusing && (
               <>
+                <button
+                  type="button"
+                  onClick={() => setExcusing(true)}
+                  disabled={submitting}
+                  className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-xl border border-blue-300 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/40 hover:bg-blue-100 text-blue-700 dark:text-blue-300 font-bold text-xs transition-colors"
+                  title="Tandai izin atau sakit"
+                >
+                  <HeartHandshake className="w-4 h-4" />
+                  <span>Izin/Sakit</span>
+                </button>
+
                 <button
                   type="button"
                   onClick={() => setRejecting(true)}

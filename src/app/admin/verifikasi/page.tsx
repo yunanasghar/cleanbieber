@@ -21,7 +21,7 @@ import type { AttendanceRecord } from '@/lib/types';
 export default function VerificationCenterPage() {
   const [logs, setLogs] = useState<AttendanceRecord[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'all' | 'pending' | 'verified' | 'rejected'>('all');
+  const [activeTab, setActiveTab] = useState<'all' | 'pending' | 'verified' | 'rejected' | 'excused'>('all');
   const [search, setSearch] = useState('');
   const [dateFilter, setDateFilter] = useState('');
   const [selectedSubmission, setSelectedSubmission] = useState<AttendanceRecord | null>(null);
@@ -53,6 +53,7 @@ export default function VerificationCenterPage() {
   const pendingCount = logs.filter((l) => l.status === 'pending').length;
   const verifiedCount = logs.filter((l) => l.status === 'verified').length;
   const rejectedCount = logs.filter((l) => l.status === 'rejected').length;
+  const excusedCount = logs.filter((l) => l.status === 'excused').length;
 
   const filteredLogs = logs.filter((l) => {
     const matchesTab = activeTab === 'all' || l.status === activeTab;
@@ -128,6 +129,16 @@ export default function VerificationCenterPage() {
             }`}
           >
             Rejected ({rejectedCount})
+          </button>
+          <button
+            onClick={() => setActiveTab('excused')}
+            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
+              activeTab === 'excused'
+                ? 'bg-blue-600 text-white shadow-xs'
+                : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+            }`}
+          >
+            Sakit/Izin ({excusedCount})
           </button>
         </div>
 

@@ -58,20 +58,24 @@ export default function AdminWeeklyRecapPage() {
   const total = logs.length;
   const verified = logs.filter((l) => l.status === 'verified').length;
   const rejected = logs.filter((l) => l.status === 'rejected').length;
+  const excused = logs.filter((l) => l.status === 'excused').length;
   const pending = logs.filter((l) => l.status === 'pending').length;
 
   const verifiedPercent = total > 0 ? ((verified / total) * 100).toFixed(1) : '0.0';
   const rejectedPercent = total > 0 ? ((rejected / total) * 100).toFixed(1) : '0.0';
+  const excusedPercent = total > 0 ? ((excused / total) * 100).toFixed(1) : '0.0';
 
   // Task breakdown
   const taskRows = (['MBG', 'Nyapu & Pel', 'Helper'] as const).map((t) => {
     const subset = logs.filter((l) => l.taskName === t);
     const ver = subset.filter((l) => l.status === 'verified').length;
+    const exc = subset.filter((l) => l.status === 'excused').length;
     const rej = subset.filter((l) => l.status === 'rejected').length;
     return {
       task: t,
       total: subset.length,
       verified: ver,
+      excused: exc,
       rejected: rej,
     };
   });
@@ -188,12 +192,12 @@ export default function AdminWeeklyRecapPage() {
         </div>
       )}
 
-      {/* 3 Metric Cards matching Mockup */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      {/* 4 Metric Cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Total Piket */}
         <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs space-y-1">
           <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">Total Piket</span>
-          <p className="text-3xl font-extrabold text-slate-900 dark:text-white">{total}</p>
+          <p className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white">{total}</p>
           <span className="text-[11px] text-slate-400 block">pengajuan tercatat</span>
         </div>
 
@@ -201,7 +205,7 @@ export default function AdminWeeklyRecapPage() {
         <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs space-y-1">
           <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">Terverifikasi</span>
           <div className="flex items-baseline gap-2">
-            <p className="text-3xl font-extrabold text-emerald-600 dark:text-emerald-400">{verified}</p>
+            <p className="text-2xl sm:text-3xl font-extrabold text-emerald-600 dark:text-emerald-400">{verified}</p>
             <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">
               ({verifiedPercent}%)
             </span>
@@ -209,11 +213,23 @@ export default function AdminWeeklyRecapPage() {
           <span className="text-[11px] text-slate-400 block">kehadiran sah</span>
         </div>
 
+        {/* Izin / Sakit */}
+        <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs space-y-1">
+          <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">Sakit / Izin</span>
+          <div className="flex items-baseline gap-2">
+            <p className="text-2xl sm:text-3xl font-extrabold text-blue-600 dark:text-blue-400">{excused}</p>
+            <span className="text-xs font-bold text-blue-600 dark:text-blue-400">
+              ({excusedPercent}%)
+            </span>
+          </div>
+          <span className="text-[11px] text-slate-400 block">dispensasi resmi</span>
+        </div>
+
         {/* Ditolak */}
         <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs space-y-1">
           <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">Ditolak</span>
           <div className="flex items-baseline gap-2">
-            <p className="text-3xl font-extrabold text-rose-600 dark:text-rose-400">{rejected}</p>
+            <p className="text-2xl sm:text-3xl font-extrabold text-rose-600 dark:text-rose-400">{rejected}</p>
             <span className="text-xs font-bold text-rose-600 dark:text-rose-400">
               ({rejectedPercent}%)
             </span>
@@ -222,7 +238,7 @@ export default function AdminWeeklyRecapPage() {
         </div>
       </div>
 
-      {/* Rekap per Tugas Table matching Mockup */}
+      {/* Rekap per Tugas Table */}
       <div className="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs overflow-hidden">
         <div className="p-5 border-b border-slate-200 dark:border-slate-800">
           <h2 className="text-base font-bold text-slate-900 dark:text-white">Rekap per Tugas</h2>
@@ -236,6 +252,7 @@ export default function AdminWeeklyRecapPage() {
                 <th className="py-3 px-4">Tugas</th>
                 <th className="py-3 px-4 text-center">Jumlah</th>
                 <th className="py-3 px-4 text-center">Terverifikasi</th>
+                <th className="py-3 px-4 text-center">Sakit / Izin</th>
                 <th className="py-3 px-4 text-center">Ditolak</th>
               </tr>
             </thead>
@@ -250,6 +267,9 @@ export default function AdminWeeklyRecapPage() {
                   </td>
                   <td className="py-3.5 px-4 text-center text-xs font-bold text-emerald-600 dark:text-emerald-400">
                     {r.verified}
+                  </td>
+                  <td className="py-3.5 px-4 text-center text-xs font-bold text-blue-600 dark:text-blue-400">
+                    {r.excused}
                   </td>
                   <td className="py-3.5 px-4 text-center text-xs font-bold text-rose-600 dark:text-rose-400">
                     {r.rejected}

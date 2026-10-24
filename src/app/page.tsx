@@ -241,9 +241,27 @@ export default function StudentHomePage() {
                   </span>
 
                   {selectedStudentLog ? (
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-bold bg-white text-blue-900">
-                      <Check className="w-3 h-3 text-emerald-600" />
-                      <span>{selectedStudentLog.status === 'verified' ? 'Terverifikasi' : 'Pending'}</span>
+                    <span
+                      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-bold ${
+                        selectedStudentLog.status === 'excused'
+                          ? 'bg-blue-100 text-blue-900'
+                          : selectedStudentLog.status === 'verified'
+                          ? 'bg-emerald-100 text-emerald-900'
+                          : 'bg-white text-blue-900'
+                      }`}
+                    >
+                      {selectedStudentLog.status === 'excused' ? (
+                        <HeartHandshake className="w-3 h-3 text-blue-600" />
+                      ) : (
+                        <Check className="w-3 h-3 text-emerald-600" />
+                      )}
+                      <span>
+                        {selectedStudentLog.status === 'verified'
+                          ? 'Terverifikasi'
+                          : selectedStudentLog.status === 'excused'
+                          ? 'Sakit / Izin'
+                          : 'Pending'}
+                      </span>
                     </span>
                   ) : (
                     <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-amber-400/30 text-amber-100 border border-amber-300/30">
@@ -306,6 +324,7 @@ export default function StudentHomePage() {
                   const log = todayLogs.find((l) => l.studentId === student.id);
                   const isVerified = log?.status === 'verified';
                   const isPending = log?.status === 'pending';
+                  const isExcused = log?.status === 'excused';
                   const isSelected = selectedStudentId === student.id;
 
                   return (
@@ -349,6 +368,14 @@ export default function StudentHomePage() {
                             title="Terverifikasi"
                           >
                             <CheckCircle2 className="w-4 h-4" />
+                          </div>
+                        ) : isExcused ? (
+                          <div
+                            className="px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 text-[10px] font-bold flex items-center gap-1"
+                            title={log?.rejectionReason || 'Sakit / Izin Resmi'}
+                          >
+                            <HeartHandshake className="w-3.5 h-3.5" />
+                            <span>Izin</span>
                           </div>
                         ) : isPending ? (
                           <div
@@ -563,13 +590,25 @@ export default function StudentHomePage() {
                     </div>
 
                     <div className="pt-2">
-                      <Link
-                        href={`/unggah?studentId=${selectedStudent.id}`}
-                        className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs shadow-xs transition-all"
-                      >
-                        <UploadCloud className="w-4 h-4" />
-                        <span>{selectedStudentLog ? 'Ajukan Ulang / Cek Foto' : 'Upload Foto Bukti Piket'}</span>
-                      </Link>
+                      {selectedStudentLog?.status === 'excused' ? (
+                        <div className="p-3.5 rounded-xl bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 text-xs text-blue-800 dark:text-blue-300 space-y-1">
+                          <p className="font-bold flex items-center gap-1.5">
+                            <HeartHandshake className="w-4 h-4 text-blue-600" />
+                            <span>Dispensasi Kehadiran Diterima</span>
+                          </p>
+                          <p className="text-[11px] text-slate-600 dark:text-slate-400">
+                            Kamu resmi tercatat <b>{selectedStudentLog.rejectionReason || 'Sakit / Izin'}</b> oleh admin. Tidak perlu mengunggah foto bukti piket hari ini.
+                          </p>
+                        </div>
+                      ) : (
+                        <Link
+                          href={`/unggah?studentId=${selectedStudent.id}`}
+                          className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs shadow-xs transition-all"
+                        >
+                          <UploadCloud className="w-4 h-4" />
+                          <span>{selectedStudentLog ? 'Ajukan Ulang / Cek Foto' : 'Upload Foto Bukti Piket'}</span>
+                        </Link>
+                      )}
                     </div>
                   </div>
                 ) : (

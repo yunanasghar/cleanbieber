@@ -86,7 +86,7 @@ export async function GET(req: NextRequest) {
       const taskName = getAssignedTask(s.dayOfWeek, s.orderIndex, todayInfo.isoWeek, todayInfo.isoYear);
       const log = todayLogs.find((l) => l.studentId === s.id);
 
-      let status: 'verified' | 'pending' | 'rejected' | 'unsubmitted' = 'unsubmitted';
+      let status: 'verified' | 'pending' | 'rejected' | 'excused' | 'unsubmitted' = 'unsubmitted';
       if (log) {
         status = log.status;
       }

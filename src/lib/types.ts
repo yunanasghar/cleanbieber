@@ -10,7 +10,7 @@ export interface StudentRecord {
   updatedAt: string;
 }
 
-export type SubmissionStatus = 'pending' | 'verified' | 'rejected';
+export type SubmissionStatus = 'pending' | 'verified' | 'rejected' | 'excused';
 export type AIStatus = 'VALID' | 'INVALID' | 'UNAVAILABLE' | 'FAILED';
 
 export interface AttendanceRecord {

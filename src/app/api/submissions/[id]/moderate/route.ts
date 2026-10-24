@@ -5,7 +5,7 @@ import { requireAdmin } from '@/lib/auth';
 import { deleteEvidencePhoto } from '@/lib/cloudinary';
 
 const ModerateSchema = z.object({
-  status: z.enum(['verified', 'rejected']),
+  status: z.enum(['verified', 'rejected', 'excused']),
   rejectionReason: z.string().optional(),
 });
 
@@ -48,17 +48,35 @@ export async function POST(
     });
 
     // 5. Audit log
+    const actionLabel =
+      status === 'verified'
+        ? 'APPROVE_SUBMISSION'
+        : status === 'excused'
+        ? 'EXCUSE_SUBMISSION'
+        : 'REJECT_SUBMISSION';
+
     await addAuditLog(
-      status === 'verified' ? 'APPROVE_SUBMISSION' : 'REJECT_SUBMISSION',
+      actionLabel,
       admin.id,
-      `${admin.name} ${status === 'verified' ? 'menyetujui' : 'menolak'} piket ${log.studentName} (${log.taskName}, ${log.dateString}).${
-        rejectionReason ? ` Alasan: ${rejectionReason}` : ''
+      `${admin.name} ${
+        status === 'verified'
+          ? 'menyetujui'
+          : status === 'excused'
+          ? 'menandai sakit/izin'
+          : 'menolak'
+      } piket ${log.studentName} (${log.taskName}, ${log.dateString}).${
+        rejectionReason ? ` Keterangan: ${rejectionReason}` : ''
       }`
     );
 
     return NextResponse.json({
       success: true,
-      message: status === 'verified' ? 'Bukti piket berhasil disetujui.' : 'Bukti piket berhasil ditolak.',
+      message:
+        status === 'verified'
+          ? 'Bukti piket berhasil disetujui.'
+          : status === 'excused'
+          ? 'Status siswa berhasil ditandai sebagai Sakit/Izin.'
+          : 'Bukti piket berhasil ditolak.',
       submission: updated,
     });
   } catch (error) {
