@@ -48,18 +48,19 @@ export async function GET(req: NextRequest) {
     const todayDateObj = new Date(`${nowJakartaStr}T00:00:00+07:00`);
     const todayInfo = getISOWeekInfo(todayDateObj);
     const todayDayOfWeek = todayInfo.dayOfWeek;
-    const activeDutyDay = todayDayOfWeek > 5 ? 1 : todayDayOfWeek;
+    const isWeekend = todayDayOfWeek > 5;
 
-    // 2. Determine Tomorrow's duty date
-    let tomorrowDaysToAdd = 1;
-    if (todayDayOfWeek === 5) tomorrowDaysToAdd = 3;
-    else if (todayDayOfWeek === 6) tomorrowDaysToAdd = 2;
+    // 2. Determine Tomorrow's / Next duty date
+    let nextDutyDaysToAdd = 1;
+    if (todayDayOfWeek === 5) nextDutyDaysToAdd = 3; // Fri -> Mon
+    else if (todayDayOfWeek === 6) nextDutyDaysToAdd = 2; // Sat -> Mon
+    else if (todayDayOfWeek === 7) nextDutyDaysToAdd = 1; // Sun -> Mon
 
-    const tomorrowDateObj = new Date(todayDateObj);
-    tomorrowDateObj.setDate(tomorrowDateObj.getDate() + tomorrowDaysToAdd);
-    const tomorrowJakartaStr = tomorrowDateObj.toLocaleDateString('sv-SE', { timeZone: 'Asia/Jakarta' });
-    const tomorrowInfo = getISOWeekInfo(tomorrowDateObj);
-    const tomorrowDayOfWeek = tomorrowInfo.dayOfWeek > 5 ? 1 : tomorrowInfo.dayOfWeek;
+    const nextDutyDateObj = new Date(todayDateObj);
+    nextDutyDateObj.setDate(nextDutyDateObj.getDate() + nextDutyDaysToAdd);
+    const nextDutyJakartaStr = nextDutyDateObj.toLocaleDateString('sv-SE', { timeZone: 'Asia/Jakarta' });
+    const nextDutyInfo = getISOWeekInfo(nextDutyDateObj);
+    const nextDutyDayOfWeek = nextDutyInfo.dayOfWeek > 5 ? 1 : nextDutyInfo.dayOfWeek;
 
     // Check duplicate send for primary admin
     const primaryAdmin = adminPhones[0] || '089673038689';
@@ -77,10 +78,12 @@ export async function GET(req: NextRequest) {
       getAttendanceLogs({ dateString: nowJakartaStr }),
     ]);
 
-    // Today's duty evaluation
-    const todayStudents = allStudents
-      .filter((s) => s.dayOfWeek === activeDutyDay)
-      .sort((a, b) => a.orderIndex - b.orderIndex);
+    // Today's duty evaluation (EMPTY on weekends because Saturday/Sunday has no duty!)
+    const todayStudents = isWeekend
+      ? []
+      : allStudents
+          .filter((s) => s.dayOfWeek === todayDayOfWeek)
+          .sort((a, b) => a.orderIndex - b.orderIndex);
 
     const todayDutyEvaluation = todayStudents.map((s) => {
       const taskName = getAssignedTask(s.dayOfWeek, s.orderIndex, todayInfo.isoWeek, todayInfo.isoYear);
@@ -99,23 +102,24 @@ export async function GET(req: NextRequest) {
       };
     });
 
-    // Tomorrow's assignments
-    const tomorrowStudents = allStudents
-      .filter((s) => s.dayOfWeek === tomorrowDayOfWeek)
+    // Next duty assignments
+    const nextDutyStudents = allStudents
+      .filter((s) => s.dayOfWeek === nextDutyDayOfWeek)
       .sort((a, b) => a.orderIndex - b.orderIndex);
 
-    const tomorrowAssignments = tomorrowStudents.map((s) => ({
+    const tomorrowAssignments = nextDutyStudents.map((s) => ({
       name: s.name,
-      taskName: getAssignedTask(s.dayOfWeek, s.orderIndex, tomorrowInfo.isoWeek, tomorrowInfo.isoYear),
+      taskName: getAssignedTask(s.dayOfWeek, s.orderIndex, nextDutyInfo.isoWeek, nextDutyInfo.isoYear),
     }));
 
     // 4. Build comprehensive text
     const message = buildAdminDailyBriefingText({
       todayDate: nowJakartaStr,
-      todayDayOfWeek: activeDutyDay,
+      todayDayOfWeek: todayDayOfWeek,
+      isWeekend,
       todayDutyStudents: todayDutyEvaluation,
-      tomorrowDate: tomorrowJakartaStr,
-      tomorrowDayOfWeek,
+      tomorrowDate: nextDutyJakartaStr,
+      tomorrowDayOfWeek: nextDutyDayOfWeek,
       tomorrowAssignments,
       classLabel: settings.classLabel,
       appUrl: process.env.APP_URL || 'https://cleanbieber.vercel.app',
@@ -136,7 +140,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({
       success: sendResult.sent > 0,
       todayDate: nowJakartaStr,
-      tomorrowDate: tomorrowJakartaStr,
+      tomorrowDate: nextDutyJakartaStr,
       recipients: adminPhones,
       sendResult,
       message,

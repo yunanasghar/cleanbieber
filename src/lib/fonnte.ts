@@ -129,8 +129,7 @@ export function buildDailyReminderText(params: {
   appUrl?: string;
   assignments: Array<{ name: string; taskName: TaskType }>;
 }): string {
-  const { targetDate, dayOfWeek, assignments } = params;
-  const dayName = DAY_NAMES[dayOfWeek] || 'Hari Kerja';
+  const { targetDate, assignments } = params;
   const formattedDate = formatIndonesianDate(new Date(`${targetDate}T00:00:00+07:00`));
   const classLabel = params.classLabel || 'Kelas 10 SIJA B';
   const appUrl = params.appUrl || process.env.APP_URL || 'https://cleanbieber.vercel.app';
@@ -145,7 +144,7 @@ export function buildDailyReminderText(params: {
 
   return `📢 *PENGINGAT PIKET KELAS*
 
-Hari/Tanggal: ${dayName}, ${formattedDate}
+Hari/Tanggal: ${formattedDate}
 Kelas: ${classLabel}
 Total petugas: ${assignments.length} siswa
 
@@ -213,6 +212,7 @@ export async function sendWhatsAppToMultiple(
 export function buildAdminDailyBriefingText(params: {
   todayDate: string; // "YYYY-MM-DD"
   todayDayOfWeek: number;
+  isWeekend?: boolean;
   todayDutyStudents: Array<{
     name: string;
     taskName: TaskType;
@@ -231,18 +231,9 @@ export function buildAdminDailyBriefingText(params: {
   const classLabel = params.classLabel || 'Kelas 10 SIJA B';
   const appUrl = params.appUrl || process.env.APP_URL || 'https://cleanbieber.vercel.app';
 
-  const todayDayName = DAY_NAMES[params.todayDayOfWeek] || 'Hari Ini';
+  const isWeekend = params.isWeekend ?? (params.todayDayOfWeek > 5);
   const todayFormatted = formatIndonesianDate(new Date(`${params.todayDate}T00:00:00+07:00`));
-
-  const tomorrowDayName = DAY_NAMES[params.tomorrowDayOfWeek] || 'Besok';
   const tomorrowFormatted = formatIndonesianDate(new Date(`${params.tomorrowDate}T00:00:00+07:00`));
-
-  // Categorize today's duty students
-  const verifiedList = params.todayDutyStudents.filter((s) => s.status === 'verified');
-  const excusedList = params.todayDutyStudents.filter((s) => s.status === 'excused');
-  const pendingReviewList = params.todayDutyStudents.filter((s) => s.status === 'pending');
-  const unsubmittedList = params.todayDutyStudents.filter((s) => s.status === 'unsubmitted');
-  const rejectedList = params.todayDutyStudents.filter((s) => s.status === 'rejected');
 
   // Tomorrow duty breakdown
   const tomorrowMbg = params.tomorrowAssignments.filter((s) => s.taskName === 'MBG');
@@ -250,68 +241,82 @@ export function buildAdminDailyBriefingText(params: {
   const tomorrowHelper = params.tomorrowAssignments.filter((s) => s.taskName === 'Helper');
 
   let text = `🧹 *LAPORAN HARIAN PIKET — ${classLabel.toUpperCase()}*\n`;
-  text += `📅 *Hari Ini:* ${todayDayName}, ${todayFormatted}\n`;
+  text += `📅 *Hari Ini:* ${todayFormatted}${isWeekend ? ' 🏖️ (Libur Akhir Pekan)' : ''}\n`;
   text += `━━━━━━━━━━━━━━━━━━━━━\n\n`;
 
-  text += `📊 *EVALUASI KEHADIRAN PIKET HARI INI:*\n\n`;
-
-  // 1. Sudah Hadir & Terverifikasi
-  text += `✅ *Hadir & Terverifikasi (${verifiedList.length}/${params.todayDutyStudents.length}):*\n`;
-  if (verifiedList.length > 0) {
-    text += verifiedList.map((s, i) => `  ${i + 1}. ${s.name} [${s.taskName}]`).join('\n') + '\n';
+  if (isWeekend || params.todayDutyStudents.length === 0) {
+    text += `📊 *EVALUASI KEHADIRAN PIKET HARI INI:*\n`;
+    text += `🏖️ *Hari Libur Akhir Pekan*\n`;
+    text += `Tidak ada jadwal piket kelas hari ini. Siswa dan kegiatan sekolah libur.\n\n`;
   } else {
-    text += `  _(Belum ada bukti yang disetujui)_\n`;
-  }
-  text += `\n`;
+    // Categorize today's duty students
+    const verifiedList = params.todayDutyStudents.filter((s) => s.status === 'verified');
+    const excusedList = params.todayDutyStudents.filter((s) => s.status === 'excused');
+    const pendingReviewList = params.todayDutyStudents.filter((s) => s.status === 'pending');
+    const unsubmittedList = params.todayDutyStudents.filter((s) => s.status === 'unsubmitted');
+    const rejectedList = params.todayDutyStudents.filter((s) => s.status === 'rejected');
 
-  // 2. Pending Verifikasi Admin
-  if (pendingReviewList.length > 0) {
-    text += `⏳ *Menunggu Verifikasi Admin (${pendingReviewList.length}):*\n`;
-    text +=
-      pendingReviewList
-        .map((s, i) => `  ${i + 1}. ${s.name} [${s.taskName}] ➔ Foto sudah diunggah, menunggu persetujuan`)
-        .join('\n') + '\n\n';
+    text += `📊 *EVALUASI KEHADIRAN PIKET HARI INI:*\n\n`;
+
+    // 1. Sudah Hadir & Terverifikasi
+    text += `✅ *Hadir & Terverifikasi (${verifiedList.length}/${params.todayDutyStudents.length}):*\n`;
+    if (verifiedList.length > 0) {
+      text += verifiedList.map((s, i) => `  ${i + 1}. ${s.name} [${s.taskName}]`).join('\n') + '\n';
+    } else {
+      text += `  _(Belum ada bukti yang disetujui)_\n`;
+    }
+    text += `\n`;
+
+    // 2. Pending Verifikasi Admin
+    if (pendingReviewList.length > 0) {
+      text += `⏳ *Menunggu Verifikasi Admin (${pendingReviewList.length}):*\n`;
+      text +=
+        pendingReviewList
+          .map((s, i) => `  ${i + 1}. ${s.name} [${s.taskName}] ➔ Foto sudah diunggah, menunggu persetujuan`)
+          .join('\n') + '\n\n';
+    }
+
+    // 3. Izin / Sakit Resmi (Dispensasi)
+    if (excusedList.length > 0) {
+      text += `🏥 *Izin / Sakit Resmi (${excusedList.length}):*\n`;
+      text +=
+        excusedList
+          .map(
+            (s, i) =>
+              `  ${i + 1}. ${s.name} [${s.taskName}] ➔ ${s.rejectionReason || 'Izin/Sakit resmi terkonfirmasi'}`
+          )
+          .join('\n') + '\n\n';
+    }
+
+    // 4. Belum Konfirmasi / Belum Upload Bukti (Urgent!)
+    text += `⚠️ *BELUM KONFIRMASI / BELUM UPLOAD (${unsubmittedList.length}):*\n`;
+    if (unsubmittedList.length > 0) {
+      text +=
+        unsubmittedList
+          .map((s, i) => `  ${i + 1}. ${s.name} [${s.taskName}] ➔ ❗Segera konfirmasi & upload bukti!`)
+          .join('\n') + '\n';
+    } else {
+      text += `  _(Semua petugas hari ini sudah konfirmasi/upload)_\n`;
+    }
+    text += `\n`;
+
+    // 5. Ditolak / Tidak Piket
+    if (rejectedList.length > 0) {
+      text += `❌ *Tidak Piket / Bukti Ditolak (${rejectedList.length}):*\n`;
+      text +=
+        rejectedList
+          .map(
+            (s, i) =>
+              `  ${i + 1}. ${s.name} [${s.taskName}] ${s.rejectionReason ? `(Alasan: ${s.rejectionReason})` : ''}`
+          )
+          .join('\n') + '\n\n';
+    }
   }
 
-  // 3. Izin / Sakit Resmi (Dispensasi)
-  if (excusedList.length > 0) {
-    text += `🏥 *Izin / Sakit Resmi (${excusedList.length}):*\n`;
-    text +=
-      excusedList
-        .map(
-          (s, i) =>
-            `  ${i + 1}. ${s.name} [${s.taskName}] ➔ ${s.rejectionReason || 'Izin/Sakit resmi terkonfirmasi'}`
-        )
-        .join('\n') + '\n\n';
-  }
-
-  // 4. Belum Konfirmasi / Belum Upload Bukti (Urgent!)
-  text += `⚠️ *BELUM KONFIRMASI / BELUM UPLOAD (${unsubmittedList.length}):*\n`;
-  if (unsubmittedList.length > 0) {
-    text +=
-      unsubmittedList
-        .map((s, i) => `  ${i + 1}. ${s.name} [${s.taskName}] ➔ ❗Segera konfirmasi & upload bukti!`)
-        .join('\n') + '\n';
-  } else {
-    text += `  _(Semua petugas hari ini sudah konfirmasi/upload)_\n`;
-  }
-  text += `\n`;
-
-  // 4. Ditolak / Tidak Piket
-  if (rejectedList.length > 0) {
-    text += `❌ *Tidak Piket / Bukti Ditolak (${rejectedList.length}):*\n`;
-    text +=
-      rejectedList
-        .map(
-          (s, i) =>
-            `  ${i + 1}. ${s.name} [${s.taskName}] ${s.rejectionReason ? `(Alasan: ${s.rejectionReason})` : ''}`
-        )
-        .join('\n') + '\n\n';
-  }
-
+  const nextDutyTitle = isWeekend ? '📋 *JADWAL PIKET BERIKUTNYA:*' : '📋 *JADWAL PIKET BESOK:*';
   text += `━━━━━━━━━━━━━━━━━━━━━\n`;
-  text += `📋 *JADWAL PIKET BESOK:* \n`;
-  text += `📅 *${tomorrowDayName}, ${tomorrowFormatted}* (${params.tomorrowAssignments.length} Petugas)\n\n`;
+  text += `${nextDutyTitle}\n`;
+  text += `📅 *${tomorrowFormatted}* (${params.tomorrowAssignments.length} Petugas)\n\n`;
 
   text += `🍱 *MBG (07:00 - 09:00 WIB):*\n`;
   text += tomorrowMbg.map((s, i) => `  ${i + 1}. ${s.name}`).join('\n') || '  -';
