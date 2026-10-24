@@ -112,7 +112,7 @@ export default function AdminWeeklyRecapPage() {
   };
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-7xl w-full mx-auto">
+    <div className="p-3 sm:p-6 lg:p-8 space-y-6 max-w-7xl w-full mx-auto min-w-0 overflow-x-hidden">
       {/* Title & Top Controls matching mockup */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -272,29 +272,29 @@ export default function AdminWeeklyRecapPage() {
         </div>
 
         {/* Visual Bar chart */}
-        <div className="flex items-end justify-between gap-4 h-52 pt-8 border-b border-slate-200 dark:border-slate-800 pb-4">
+        <div className="flex items-end justify-between gap-1.5 sm:gap-4 h-52 pt-8 border-b border-slate-200 dark:border-slate-800 pb-4 min-w-0">
           {dayChartData.map((d) => {
             const maxVal = Math.max(...dayChartData.map((x) => x.total), 8);
             const hadirHeight = Math.round((d.hadir / maxVal) * 100);
             const tidakHadirHeight = Math.round((d.tidakHadir / maxVal) * 100);
 
             return (
-              <div key={d.day} className="flex-1 flex flex-col items-center gap-2 h-full justify-end">
-                <div className="flex items-end gap-1.5 h-36">
+              <div key={d.day} className="flex-1 flex flex-col items-center gap-2 h-full justify-end min-w-0">
+                <div className="flex items-end gap-1 sm:gap-1.5 h-36">
                   {/* Hadir Bar */}
                   <div
-                    className="w-5 sm:w-7 bg-blue-600 rounded-t-md transition-all duration-300"
+                    className="w-3.5 sm:w-7 bg-blue-600 rounded-t-md transition-all duration-300"
                     style={{ height: `${Math.max(hadirHeight, 6)}%` }}
                     title={`Hadir: ${d.hadir}`}
                   />
                   {/* Tidak Hadir Bar */}
                   <div
-                    className="w-5 sm:w-7 bg-slate-200 dark:bg-slate-700 rounded-t-md transition-all duration-300"
+                    className="w-3.5 sm:w-7 bg-slate-200 dark:bg-slate-700 rounded-t-md transition-all duration-300"
                     style={{ height: `${Math.max(tidakHadirHeight, 6)}%` }}
                     title={`Tidak Hadir/Ditolak: ${d.tidakHadir}`}
                   />
                 </div>
-                <span className="text-xs font-semibold text-slate-600 dark:text-slate-400 mt-2">
+                <span className="text-[11px] sm:text-xs font-semibold text-slate-600 dark:text-slate-400 mt-2 truncate">
                   {d.day}
                 </span>
               </div>

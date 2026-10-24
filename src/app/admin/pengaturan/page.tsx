@@ -136,7 +136,7 @@ export default function AdminSettingsPage() {
   };
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-4xl w-full mx-auto">
+    <div className="p-3 sm:p-6 lg:p-8 space-y-6 max-w-4xl w-full mx-auto min-w-0 overflow-x-hidden">
       <div>
         <h1 className="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">
           Pengaturan Sistem

@@ -80,7 +80,7 @@ export default function AdminStatisticsPage() {
   });
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-7xl w-full mx-auto">
+    <div className="p-3 sm:p-6 lg:p-8 space-y-6 max-w-7xl w-full mx-auto min-w-0 overflow-x-hidden">
       <div>
         <h1 className="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">
           Statistik Kehadiran Piket
@@ -91,7 +91,7 @@ export default function AdminStatisticsPage() {
       </div>
 
       {/* Top 4 stat summary */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs space-y-2">
           <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
             Tingkat Kelulusan Piket

@@ -92,7 +92,7 @@ export default function AdminDashboardPage() {
   };
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-7xl w-full mx-auto">
+    <div className="p-3 sm:p-6 lg:p-8 space-y-6 max-w-7xl w-full mx-auto min-w-0 overflow-x-hidden">
       {/* Top Header Bar matching Mockup */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -211,7 +211,73 @@ export default function AdminDashboardPage() {
             </Link>
           </div>
 
-          <div className="overflow-x-auto">
+          {/* Mobile Card List (md:hidden) */}
+          <div className="md:hidden divide-y divide-slate-100 dark:divide-slate-800">
+            {todayStudents.length === 0 ? (
+              <div className="py-8 text-center text-xs text-slate-400">
+                Tidak ada petugas piket terjadwal.
+              </div>
+            ) : (
+              todayStudents.map((student, idx) => {
+                const taskName = getAssignedTask(
+                  student.dayOfWeek,
+                  student.orderIndex,
+                  dateInfo.isoWeek,
+                  dateInfo.isoYear
+                );
+                const log = todayLogs.find((l) => l.studentId === student.id);
+
+                return (
+                  <div
+                    key={student.id}
+                    className="p-3.5 flex items-center justify-between gap-2.5 hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition-colors"
+                  >
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className="w-6 h-6 rounded-full bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300 flex items-center justify-center text-[11px] font-bold shrink-0">
+                        {idx + 1}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="font-bold text-xs text-slate-900 dark:text-white truncate">
+                          {student.name}
+                        </p>
+                        <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                          <TaskBadge task={taskName} size="sm" />
+                          {log ? (
+                            <StatusBadge status={log.status} size="sm" />
+                          ) : (
+                            <span className="text-[10px] text-slate-400">Belum Ada Bukti</span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="shrink-0">
+                      {log?.tempPhotoUrl ? (
+                        <button
+                          onClick={() => setSelectedSubmission(log)}
+                          className="w-10 h-10 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 bg-slate-100 shadow-2xs hover:opacity-85 transition-opacity"
+                        >
+                          <img src={log.tempPhotoUrl} alt="Bukti" className="w-full h-full object-cover" />
+                        </button>
+                      ) : log ? (
+                        <button
+                          onClick={() => setSelectedSubmission(log)}
+                          className="p-2 rounded-xl text-blue-600 bg-blue-50 dark:bg-blue-950/60 dark:text-blue-400 text-xs font-semibold"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </button>
+                      ) : (
+                        <span className="text-slate-300 dark:text-slate-600 text-xs px-2">-</span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+
+          {/* Desktop Table (hidden md:block) */}
+          <div className="hidden md:block overflow-x-auto min-w-0 w-full">
             <table className="w-full text-left text-sm">
               <thead className="bg-slate-50/70 dark:bg-slate-800/60 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider border-b border-slate-200 dark:border-slate-800">
                 <tr>

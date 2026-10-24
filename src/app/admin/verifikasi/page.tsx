@@ -65,7 +65,7 @@ export default function VerificationCenterPage() {
   };
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-7xl w-full mx-auto">
+    <div className="p-3 sm:p-6 lg:p-8 space-y-6 max-w-7xl w-full mx-auto min-w-0 overflow-x-hidden">
       {/* Page Title */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -163,9 +163,85 @@ export default function VerificationCenterPage() {
         </div>
       </div>
 
-      {/* Verification Table matching Mockup */}
-      <div className="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs overflow-hidden">
-        <div className="overflow-x-auto">
+      {/* Mobile Card List (md:hidden) */}
+      <div className="md:hidden space-y-3 min-w-0">
+        {loading ? (
+          <div className="py-12 text-center text-xs text-slate-400 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800">
+            Memuat data pengajuan...
+          </div>
+        ) : filteredLogs.length === 0 ? (
+          <div className="py-12 text-center text-xs text-slate-400 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800">
+            Tidak ada bukti piket dalam antrean ini.
+          </div>
+        ) : (
+          filteredLogs.map((log) => {
+            const isValidAi = log.aiStatus === 'VALID';
+            return (
+              <div
+                key={log.id}
+                className="p-3.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs space-y-3 min-w-0"
+              >
+                <div className="flex items-start gap-3 min-w-0">
+                  {log.tempPhotoUrl ? (
+                    <div
+                      onClick={() => setSelectedSubmission(log)}
+                      className="w-16 h-16 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 bg-slate-100 shrink-0 cursor-pointer"
+                    >
+                      <img src={log.tempPhotoUrl} alt="Bukti" className="w-full h-full object-cover" />
+                    </div>
+                  ) : (
+                    <div className="w-16 h-16 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-[10px] text-slate-400 shrink-0">
+                      Foto Dihapus
+                    </div>
+                  )}
+
+                  <div className="min-w-0 flex-1">
+                    <p className="font-bold text-xs text-slate-900 dark:text-white truncate">
+                      {log.studentName}
+                    </p>
+                    <p className="text-[10px] text-slate-400">
+                      {formatIndonesianDate(new Date(`${log.dateString}T00:00:00+07:00`))}
+                    </p>
+
+                    <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
+                      <TaskBadge task={log.taskName} size="sm" />
+                      <StatusBadge status={log.status} size="sm" />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-2">
+                  <div>
+                    {log.aiStatus && (
+                      <span
+                        className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                          isValidAi
+                            ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400'
+                            : 'bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-400'
+                        }`}
+                      >
+                        <Sparkles className="w-3 h-3" />
+                        <span>AI {isValidAi ? 'Valid' : 'Invalid'}</span>
+                      </span>
+                    )}
+                  </div>
+
+                  <button
+                    onClick={() => setSelectedSubmission(log)}
+                    className="px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-2xs transition-colors"
+                  >
+                    Tinjau Bukti
+                  </button>
+                </div>
+              </div>
+            );
+          })
+        )}
+      </div>
+
+      {/* Desktop Verification Table (hidden md:block) */}
+      <div className="hidden md:block rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs overflow-hidden min-w-0">
+        <div className="overflow-x-auto min-w-0 w-full">
           <table className="w-full text-left text-sm">
             <thead className="bg-slate-50/70 dark:bg-slate-800/60 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider border-b border-slate-200 dark:border-slate-800">
               <tr>

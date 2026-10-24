@@ -16,6 +16,16 @@ export default function SubmissionStatusPage() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    // Check saved student
+    try {
+      const savedId = localStorage.getItem('cleanbieber_student_id');
+      if (savedId) {
+        setSelectedStudentId(savedId);
+      }
+    } catch {
+      // ignore
+    }
+
     async function fetchStudents() {
       try {
         const res = await fetch('/api/students');
@@ -29,6 +39,17 @@ export default function SubmissionStatusPage() {
     }
     fetchStudents();
   }, []);
+
+  const handleSelectStudent = (id: string) => {
+    setSelectedStudentId(id);
+    try {
+      if (id) {
+        localStorage.setItem('cleanbieber_student_id', id);
+      }
+    } catch {
+      // ignore
+    }
+  };
 
   useEffect(() => {
     async function fetchStudentLogs() {
@@ -55,15 +76,15 @@ export default function SubmissionStatusPage() {
   const selectedStudent = students.find((s) => s.id === selectedStudentId);
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-[#0b1120] text-slate-900 dark:text-slate-100 transition-colors">
+    <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-[#0b1120] text-slate-900 dark:text-slate-100 transition-colors w-full max-w-full overflow-x-hidden">
       <PublicNavbar />
 
-      <main className="flex-1 max-w-4xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 space-y-6">
-        <div className="text-center max-w-lg mx-auto space-y-2">
+      <main className="flex-1 max-w-4xl w-full mx-auto px-3 sm:px-6 lg:px-8 py-6 sm:py-10 space-y-5 min-w-0">
+        <div className="text-center max-w-lg mx-auto space-y-1.5 px-2">
           <span className="text-xs font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400">
             Pengecekan Status
           </span>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white">
+          <h1 className="text-xl sm:text-3xl font-extrabold text-slate-900 dark:text-white">
             Cek Status Bukti Piket
           </h1>
           <p className="text-xs text-slate-500 dark:text-slate-400">
@@ -72,14 +93,14 @@ export default function SubmissionStatusPage() {
         </div>
 
         {/* Student Selector */}
-        <div className="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 shadow-sm max-w-md mx-auto space-y-3">
+        <div className="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 sm:p-6 shadow-xs max-w-md mx-auto space-y-2 min-w-0">
           <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
-            Pilih Nama Siswa:
+            Pilih Nama Kamu:
           </label>
           <select
             value={selectedStudentId}
-            onChange={(e) => setSelectedStudentId(e.target.value)}
-            className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+            onChange={(e) => handleSelectStudent(e.target.value)}
+            className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs sm:text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 truncate"
           >
             <option value="">-- Pilih Nama Kamu --</option>
             {students.map((s) => (
@@ -92,8 +113,8 @@ export default function SubmissionStatusPage() {
 
         {/* Results */}
         {selectedStudent && (
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
+          <div className="space-y-4 min-w-0 w-full">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
                 <h3 className="text-base font-bold text-slate-900 dark:text-white">
                   Riwayat Bukti: {selectedStudent.name}
@@ -105,7 +126,7 @@ export default function SubmissionStatusPage() {
 
               <Link
                 href={`/unggah?studentId=${selectedStudent.id}`}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-medium text-xs transition-colors"
+                className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-medium text-xs transition-colors shrink-0"
               >
                 <UploadCloud className="w-3.5 h-3.5" />
                 <span>Upload Bukti Baru</span>
@@ -113,7 +134,7 @@ export default function SubmissionStatusPage() {
             </div>
 
             {loading ? (
-              <div className="py-12 text-center text-xs text-slate-400 animate-pulse">
+              <div className="py-12 text-center text-xs text-slate-400 animate-pulse bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800">
                 Memuat riwayat pengajuan...
               </div>
             ) : logs.length === 0 ? (
@@ -130,13 +151,13 @@ export default function SubmissionStatusPage() {
                 </Link>
               </div>
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-3 min-w-0">
                 {logs.map((log) => (
                   <div
                     key={log.id}
-                    className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                    className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4 min-w-0"
                   >
-                    <div className="space-y-2">
+                    <div className="space-y-2 min-w-0">
                       <div className="flex flex-wrap items-center gap-2">
                         <TaskBadge task={log.taskName} size="sm" />
                         <StatusBadge status={log.status} size="sm" />

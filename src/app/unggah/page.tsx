@@ -174,7 +174,7 @@ function UploadFormContent() {
   };
 
   return (
-    <div className="max-w-xl mx-auto space-y-6">
+    <div className="max-w-xl mx-auto space-y-5 w-full min-w-0">
       {/* Back button */}
       <div>
         <button
@@ -186,7 +186,7 @@ function UploadFormContent() {
         </button>
       </div>
 
-      <div className="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 sm:p-8 shadow-sm space-y-6">
+      <div className="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 sm:p-8 shadow-xs space-y-5 min-w-0">
         <div>
           <span className="text-xs font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400">
             Formulir Bukti Piket
@@ -425,9 +425,9 @@ function UploadFormContent() {
 
 export default function StudentUploadPage() {
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-[#0b1120] text-slate-900 dark:text-slate-100 transition-colors">
+    <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-[#0b1120] text-slate-900 dark:text-slate-100 transition-colors w-full max-w-full overflow-x-hidden">
       <PublicNavbar />
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+      <main className="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 py-5 sm:py-10 min-w-0">
         <Suspense fallback={<div className="text-center text-xs text-slate-400">Memuat formulir...</div>}>
           <UploadFormContent />
         </Suspense>

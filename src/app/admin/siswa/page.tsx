@@ -135,7 +135,7 @@ export default function AdminStudentsPage() {
   });
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-7xl w-full mx-auto">
+    <div className="p-3 sm:p-6 lg:p-8 space-y-6 max-w-7xl w-full mx-auto min-w-0 overflow-x-hidden">
       {/* Title & Actions */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -196,9 +196,64 @@ export default function AdminStudentsPage() {
         </div>
       </div>
 
-      {/* Table */}
-      <div className="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs overflow-hidden">
-        <div className="overflow-x-auto">
+      {/* Mobile Card List (md:hidden) */}
+      <div className="md:hidden space-y-2.5 min-w-0">
+        {loading ? (
+          <div className="py-12 text-center text-xs text-slate-400 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800">
+            Memuat data siswa...
+          </div>
+        ) : filtered.length === 0 ? (
+          <div className="py-12 text-center text-xs text-slate-400 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800">
+            Tidak ada siswa ditemukan.
+          </div>
+        ) : (
+          filtered.map((student, idx) => (
+            <div
+              key={student.id}
+              className="p-3.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs flex items-center justify-between gap-3 min-w-0"
+            >
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="w-7 h-7 rounded-full bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300 font-bold text-xs flex items-center justify-center shrink-0">
+                  {idx + 1}
+                </div>
+                <div className="min-w-0">
+                  <p className="font-bold text-xs text-slate-900 dark:text-white truncate">
+                    {student.name}
+                  </p>
+                  <div className="flex items-center gap-2 mt-0.5 text-[11px] text-slate-500">
+                    <span className="font-semibold text-blue-600 dark:text-blue-400">
+                      {DAY_NAMES[student.dayOfWeek]}
+                    </span>
+                    <span>•</span>
+                    <span>Slot #{student.orderIndex + 1}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-1 shrink-0">
+                <button
+                  onClick={() => handleOpenEdit(student)}
+                  className="p-2 rounded-xl text-slate-500 hover:text-blue-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                  title="Edit siswa"
+                >
+                  <Edit2 className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => setDeleteConfirmId(student.id)}
+                  className="p-2 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors"
+                  title="Hapus siswa"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+
+      {/* Desktop Table (hidden md:block) */}
+      <div className="hidden md:block rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs overflow-hidden min-w-0">
+        <div className="overflow-x-auto min-w-0 w-full">
           <table className="w-full text-left text-sm">
             <thead className="bg-slate-50/70 dark:bg-slate-800/60 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider border-b border-slate-200 dark:border-slate-800">
               <tr>
