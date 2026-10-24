@@ -19,6 +19,7 @@ import {
   HeartHandshake,
   UserCheck,
   Check,
+  Coffee,
 } from 'lucide-react';
 import PublicNavbar from '@/components/PublicNavbar';
 import TaskBadge from '@/components/TaskBadge';
@@ -101,10 +102,12 @@ export default function StudentHomePage() {
     loadData();
   }, [dateInfo.dateString]);
 
-  // Today's students roster
-  const todayStudents = students
-    .filter((s) => s.dayOfWeek === activeDutyDay)
-    .sort((a, b) => a.orderIndex - b.orderIndex);
+  // Today's students roster (empty on weekends because Saturday/Sunday has no duty)
+  const todayStudents = isWeekend
+    ? []
+    : students
+        .filter((s) => s.dayOfWeek === activeDutyDay)
+        .sort((a, b) => a.orderIndex - b.orderIndex);
 
   // Selected student details
   const selectedStudent = students.find((s) => s.id === selectedStudentId);
@@ -124,7 +127,7 @@ export default function StudentHomePage() {
     ? todayLogs.find((l) => l.studentId === selectedStudent.id)
     : null;
 
-  const isSelectedStudentDutyToday = selectedStudent && selectedStudent.dayOfWeek === activeDutyDay;
+  const isSelectedStudentDutyToday = !isWeekend && selectedStudent && selectedStudent.dayOfWeek === activeDutyDay;
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-[#0b1120] text-slate-900 dark:text-slate-100 transition-colors w-full max-w-full overflow-x-hidden">
@@ -158,8 +161,14 @@ export default function StudentHomePage() {
                 <Calendar className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
                 <span>{formattedDate}</span>
               </div>
-              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
-                Hari Ini
+              <span
+                className={`px-2 py-0.5 rounded text-[10px] font-bold border ${
+                  isWeekend
+                    ? 'bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 border-amber-200 dark:border-amber-800'
+                    : 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800'
+                }`}
+              >
+                {isWeekend ? `Libur (${DAY_NAMES[todayDayOfWeek]})` : 'Hari Ini'}
               </span>
             </div>
           </div>
@@ -222,7 +231,28 @@ export default function StudentHomePage() {
               )}
             </div>
 
-            {selectedStudent ? (
+            {isWeekend ? (
+              <div className="space-y-1.5 py-1">
+                <div className="flex items-center gap-2">
+                  <span className="text-xl">🏖️</span>
+                  <h2 className="text-base font-extrabold tracking-tight">
+                    Hari Libur ({DAY_NAMES[todayDayOfWeek]})
+                  </h2>
+                </div>
+                <p className="text-xs text-blue-100 leading-relaxed">
+                  {selectedStudent
+                    ? `Tidak ada piket hari ini. Jadwal piket kamu adalah hari ${DAY_NAMES[selectedStudent.dayOfWeek]} (${selectedStudentTask}). Selamat berakhir pekan!`
+                    : `Hari Sabtu dan Minggu adalah libur sekolah. Tidak ada jadwal piket kelas hari ini. Selamat berlibur!`}
+                </p>
+                {selectedStudent && (
+                  <div className="pt-0.5">
+                    <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-white/20 text-blue-50 backdrop-blur-xs">
+                      Piket Kamu: Hari {DAY_NAMES[selectedStudent.dayOfWeek]}
+                    </span>
+                  </div>
+                )}
+              </div>
+            ) : selectedStudent ? (
               <div className="space-y-1.5">
                 <h2 className="text-lg font-extrabold tracking-tight">
                   {selectedStudentTask === 'MBG'
@@ -288,10 +318,12 @@ export default function StudentHomePage() {
             <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
               <div>
                 <h3 className="text-sm font-bold text-slate-900 dark:text-white">
-                  Jadwal Piket Hari Ini
+                  {isWeekend ? 'Jadwal Hari Ini' : 'Jadwal Piket Hari Ini'}
                 </h3>
                 <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                  {DAY_NAMES[activeDutyDay]} — {todayStudents.length} Siswa Bertugas
+                  {isWeekend
+                    ? `${DAY_NAMES[todayDayOfWeek]} — Hari Libur Akhir Pekan`
+                    : `${DAY_NAMES[activeDutyDay]} — ${todayStudents.length} Siswa Bertugas`}
                 </p>
               </div>
               <Link
@@ -303,102 +335,126 @@ export default function StudentHomePage() {
               </Link>
             </div>
 
-            {/* Mobile Vertical Row Items */}
-            <div className="divide-y divide-slate-100 dark:divide-slate-800/80">
-              {loading ? (
-                <div className="py-8 text-center text-xs text-slate-400 animate-pulse">
-                  Memuat data jadwal piket...
+            {isWeekend ? (
+              <div className="p-6 text-center space-y-3">
+                <div className="w-12 h-12 rounded-2xl bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 flex items-center justify-center mx-auto">
+                  <Coffee className="w-6 h-6" />
                 </div>
-              ) : todayStudents.length === 0 ? (
-                <div className="py-8 text-center text-xs text-slate-400">
-                  Tidak ada jadwal piket hari ini.
+                <div>
+                  <h4 className="font-bold text-sm text-slate-900 dark:text-white">
+                    Hari Libur Sekolah
+                  </h4>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-xs mx-auto leading-relaxed">
+                    Tidak ada kegiatan piket kelas pada hari {DAY_NAMES[todayDayOfWeek]}. Piket kelas akan kembali aktif pada hari <b>Senin</b> besok.
+                  </p>
                 </div>
-              ) : (
-                todayStudents.map((student, idx) => {
-                  const taskName = getAssignedTask(
-                    student.dayOfWeek,
-                    student.orderIndex,
-                    dateInfo.isoWeek,
-                    dateInfo.isoYear
-                  );
-                  const log = todayLogs.find((l) => l.studentId === student.id);
-                  const isVerified = log?.status === 'verified';
-                  const isPending = log?.status === 'pending';
-                  const isExcused = log?.status === 'excused';
-                  const isSelected = selectedStudentId === student.id;
+                <div className="pt-1">
+                  <Link
+                    href="/jadwal"
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 font-semibold text-xs hover:bg-blue-100 transition-colors"
+                  >
+                    <Calendar className="w-3.5 h-3.5" />
+                    <span>Lihat Roster Jadwal Lengkap</span>
+                  </Link>
+                </div>
+              </div>
+            ) : (
+              <div className="divide-y divide-slate-100 dark:divide-slate-800/80">
+                {loading ? (
+                  <div className="py-8 text-center text-xs text-slate-400 animate-pulse">
+                    Memuat data jadwal piket...
+                  </div>
+                ) : todayStudents.length === 0 ? (
+                  <div className="py-8 text-center text-xs text-slate-400">
+                    Tidak ada jadwal piket hari ini.
+                  </div>
+                ) : (
+                  todayStudents.map((student, idx) => {
+                    const taskName = getAssignedTask(
+                      student.dayOfWeek,
+                      student.orderIndex,
+                      dateInfo.isoWeek,
+                      dateInfo.isoYear
+                    );
+                    const log = todayLogs.find((l) => l.studentId === student.id);
+                    const isVerified = log?.status === 'verified';
+                    const isPending = log?.status === 'pending';
+                    const isExcused = log?.status === 'excused';
+                    const isSelected = selectedStudentId === student.id;
 
-                  return (
-                    <div
-                      key={student.id}
-                      onClick={() => handleSelectStudent(student.id)}
-                      className={`p-3.5 flex items-center justify-between gap-2.5 transition-colors cursor-pointer ${
-                        isSelected
-                          ? 'bg-blue-50/70 dark:bg-blue-950/40'
-                          : 'hover:bg-slate-50/80 dark:hover:bg-slate-800/50'
-                      }`}
-                    >
-                      <div className="flex items-center gap-2.5 min-w-0">
-                        {/* Number Circle */}
-                        <div
-                          className={`w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold shrink-0 ${
-                            isSelected
-                              ? 'bg-blue-600 text-white'
-                              : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300'
-                          }`}
-                        >
-                          {idx + 1}
+                    return (
+                      <div
+                        key={student.id}
+                        onClick={() => handleSelectStudent(student.id)}
+                        className={`p-3.5 flex items-center justify-between gap-2.5 transition-colors cursor-pointer ${
+                          isSelected
+                            ? 'bg-blue-50/70 dark:bg-blue-950/40'
+                            : 'hover:bg-slate-50/80 dark:hover:bg-slate-800/50'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          {/* Number Circle */}
+                          <div
+                            className={`w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold shrink-0 ${
+                              isSelected
+                                ? 'bg-blue-600 text-white'
+                                : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300'
+                            }`}
+                          >
+                            {idx + 1}
+                          </div>
+
+                          {/* Name and Task */}
+                          <div className="min-w-0">
+                            <p className="text-xs font-bold text-slate-900 dark:text-white truncate">
+                              {student.name}
+                            </p>
+                            <div className="mt-0.5">
+                              <TaskBadge task={taskName} size="sm" />
+                            </div>
+                          </div>
                         </div>
 
-                        {/* Name and Task */}
-                        <div className="min-w-0">
-                          <p className="text-xs font-bold text-slate-900 dark:text-white truncate">
-                            {student.name}
-                          </p>
-                          <div className="mt-0.5">
-                            <TaskBadge task={taskName} size="sm" />
-                          </div>
+                        {/* Right status icon / button */}
+                        <div className="shrink-0 flex items-center gap-1.5">
+                          {isVerified ? (
+                            <div
+                              className="w-7 h-7 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center"
+                              title="Terverifikasi"
+                            >
+                              <CheckCircle2 className="w-4 h-4" />
+                            </div>
+                          ) : isExcused ? (
+                            <div
+                              className="px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 text-[10px] font-bold flex items-center gap-1"
+                              title={log?.rejectionReason || 'Sakit / Izin Resmi'}
+                            >
+                              <HeartHandshake className="w-3.5 h-3.5" />
+                              <span>Izin</span>
+                            </div>
+                          ) : isPending ? (
+                            <div
+                              className="w-7 h-7 rounded-full bg-amber-100 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center"
+                              title="Pending Verifikasi"
+                            >
+                              <Clock className="w-4 h-4" />
+                            </div>
+                          ) : (
+                            <Link
+                              href={`/unggah?studentId=${student.id}`}
+                              onClick={(e) => e.stopPropagation()}
+                              className="px-2.5 py-1 rounded-lg bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 text-[11px] font-semibold hover:bg-blue-100 transition-colors"
+                            >
+                              Upload
+                            </Link>
+                          )}
                         </div>
                       </div>
-
-                      {/* Right status icon / button */}
-                      <div className="shrink-0 flex items-center gap-1.5">
-                        {isVerified ? (
-                          <div
-                            className="w-7 h-7 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center"
-                            title="Terverifikasi"
-                          >
-                            <CheckCircle2 className="w-4 h-4" />
-                          </div>
-                        ) : isExcused ? (
-                          <div
-                            className="px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 text-[10px] font-bold flex items-center gap-1"
-                            title={log?.rejectionReason || 'Sakit / Izin Resmi'}
-                          >
-                            <HeartHandshake className="w-3.5 h-3.5" />
-                            <span>Izin</span>
-                          </div>
-                        ) : isPending ? (
-                          <div
-                            className="w-7 h-7 rounded-full bg-amber-100 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center"
-                            title="Pending Verifikasi"
-                          >
-                            <Clock className="w-4 h-4" />
-                          </div>
-                        ) : (
-                          <Link
-                            href={`/unggah?studentId=${student.id}`}
-                            onClick={(e) => e.stopPropagation()}
-                            className="px-2.5 py-1 rounded-lg bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 text-[11px] font-semibold hover:bg-blue-100 transition-colors"
-                          >
-                            Upload
-                          </Link>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })
-              )}
-            </div>
+                    );
+                  })
+                )}
+              </div>
+            )}
           </div>
 
           {/* Mobile Quick Feature Cards (Compact 2x2) */}
@@ -424,19 +480,29 @@ export default function StudentHomePage() {
             </div>
           </div>
 
-          {/* Sticky Bottom Action Button for Mobile — Direct One-Tap Upload */}
+          {/* Sticky Bottom Action Button for Mobile */}
           <div className="sticky bottom-0 z-30 pt-2 pb-3 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 -mx-3 px-3 shadow-lg">
-            <Link
-              href={selectedStudent ? `/unggah?studentId=${selectedStudent.id}` : '/unggah'}
-              className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm shadow-md shadow-blue-500/25 active:scale-[0.99] transition-all"
-            >
-              <Camera className="w-4 h-4" />
-              <span>
-                {selectedStudent
-                  ? `Upload Foto Bukti (${selectedStudent.name.split(' ')[0]})`
-                  : 'Upload Foto Bukti Piket'}
-              </span>
-            </Link>
+            {isWeekend ? (
+              <Link
+                href="/jadwal"
+                className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-blue-600 dark:hover:bg-blue-700 text-white font-bold text-sm shadow-md transition-all"
+              >
+                <Calendar className="w-4 h-4" />
+                <span>Lihat Roster Jadwal Lengkap (Senin - Jumat)</span>
+              </Link>
+            ) : (
+              <Link
+                href={selectedStudent ? `/unggah?studentId=${selectedStudent.id}` : '/unggah'}
+                className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm shadow-md shadow-blue-500/25 active:scale-[0.99] transition-all"
+              >
+                <Camera className="w-4 h-4" />
+                <span>
+                  {selectedStudent
+                    ? `Upload Foto Bukti (${selectedStudent.name.split(' ')[0]})`
+                    : 'Upload Foto Bukti Piket'}
+                </span>
+              </Link>
+            )}
           </div>
         </div>
 
@@ -554,7 +620,28 @@ export default function StudentHomePage() {
                 </div>
 
                 {/* Selected Student Card */}
-                {selectedStudent ? (
+                {isWeekend ? (
+                  <div className="p-4 rounded-xl bg-amber-50/70 dark:bg-amber-950/30 border border-amber-100 dark:border-amber-900/50 space-y-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg">🏖️</span>
+                      <h4 className="text-sm font-bold text-amber-900 dark:text-amber-200">
+                        Hari Libur ({DAY_NAMES[todayDayOfWeek]})
+                      </h4>
+                    </div>
+                    <p className="text-xs text-amber-800/80 dark:text-amber-300/80 leading-relaxed">
+                      {selectedStudent
+                        ? `Halo ${selectedStudent.name}! Tidak ada jadwal piket hari ini. Jadwal piket rutin kamu adalah hari ${DAY_NAMES[selectedStudent.dayOfWeek]} (${selectedStudentTask}).`
+                        : `Hari Sabtu dan Minggu adalah libur sekolah. Tidak ada jadwal piket kelas hari ini. Selamat berakhir pekan!`}
+                    </p>
+                    {selectedStudent && (
+                      <div className="pt-1">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-amber-100 text-amber-800 dark:bg-amber-900/60 dark:text-amber-200">
+                          Jadwal Kamu: Hari {DAY_NAMES[selectedStudent.dayOfWeek]}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                ) : selectedStudent ? (
                   <div className="p-4 rounded-xl bg-blue-50/70 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900/50 space-y-3">
                     <div className="flex items-start justify-between">
                       <div>
@@ -667,10 +754,12 @@ export default function StudentHomePage() {
                 <div className="p-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
                   <div>
                     <h3 className="text-base font-bold text-slate-900 dark:text-white">
-                      Jadwal Piket Hari Ini
+                      {isWeekend ? 'Jadwal Hari Ini' : 'Jadwal Piket Hari Ini'}
                     </h3>
                     <p className="text-xs text-slate-500 dark:text-slate-400">
-                      {DAY_NAMES[activeDutyDay]}, {formattedDate} — {todayStudents.length} Siswa Bertugas
+                      {isWeekend
+                        ? `${DAY_NAMES[todayDayOfWeek]} — Hari Libur Akhir Pekan`
+                        : `${DAY_NAMES[todayDayOfWeek]}, ${formattedDate} — ${todayStudents.length} Siswa Bertugas`}
                     </p>
                   </div>
                   <Link
@@ -682,84 +771,107 @@ export default function StudentHomePage() {
                   </Link>
                 </div>
 
-                {/* Table */}
-                <div className="overflow-x-auto min-w-0 w-full">
-                  <table className="w-full text-left text-sm">
-                    <thead className="bg-slate-50 dark:bg-slate-800/60 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider border-b border-slate-200 dark:border-slate-800">
-                      <tr>
-                        <th className="py-3 px-4 w-12 text-center">No</th>
-                        <th className="py-3 px-4">Nama Siswa</th>
-                        <th className="py-3 px-4">Tugas</th>
-                        <th className="py-3 px-4">Status</th>
-                        <th className="py-3 px-4 text-center">Aksi</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                      {loading ? (
+                {/* Table or Weekend Empty State */}
+                {isWeekend ? (
+                  <div className="p-10 text-center space-y-3">
+                    <div className="w-14 h-14 rounded-2xl bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 flex items-center justify-center mx-auto">
+                      <Coffee className="w-7 h-7" />
+                    </div>
+                    <h4 className="font-bold text-base text-slate-900 dark:text-white">
+                      Hari Libur Akhir Pekan ({DAY_NAMES[todayDayOfWeek]})
+                    </h4>
+                    <p className="text-sm text-slate-500 dark:text-slate-400 max-w-md mx-auto leading-relaxed">
+                      Tidak ada kegiatan piket kelas pada hari {DAY_NAMES[todayDayOfWeek]}. Selamat berakhir pekan! Piket kelas akan kembali aktif pada hari <b>Senin</b> besok.
+                    </p>
+                    <div className="pt-2">
+                      <Link
+                        href="/jadwal"
+                        className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 font-semibold text-xs hover:bg-blue-100 transition-colors"
+                      >
+                        <Calendar className="w-4 h-4" />
+                        <span>Lihat Roster Jadwal Lengkap (Senin – Jumat)</span>
+                      </Link>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto min-w-0 w-full">
+                    <table className="w-full text-left text-sm">
+                      <thead className="bg-slate-50 dark:bg-slate-800/60 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider border-b border-slate-200 dark:border-slate-800">
                         <tr>
-                          <td colSpan={5} className="py-8 text-center text-slate-400 text-xs">
-                            Memuat data jadwal piket...
-                          </td>
+                          <th className="py-3 px-4 w-12 text-center">No</th>
+                          <th className="py-3 px-4">Nama Siswa</th>
+                          <th className="py-3 px-4">Tugas</th>
+                          <th className="py-3 px-4">Status</th>
+                          <th className="py-3 px-4 text-center">Aksi</th>
                         </tr>
-                      ) : todayStudents.length === 0 ? (
-                        <tr>
-                          <td colSpan={5} className="py-8 text-center text-slate-400 text-xs">
-                            Tidak ada jadwal piket hari ini.
-                          </td>
-                        </tr>
-                      ) : (
-                        todayStudents.map((student, idx) => {
-                          const taskName = getAssignedTask(
-                            student.dayOfWeek,
-                            student.orderIndex,
-                            dateInfo.isoWeek,
-                            dateInfo.isoYear
-                          );
-                          const log = todayLogs.find((l) => l.studentId === student.id);
+                      </thead>
+                      <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                        {loading ? (
+                          <tr>
+                            <td colSpan={5} className="py-8 text-center text-slate-400 text-xs">
+                              Memuat data jadwal piket...
+                            </td>
+                          </tr>
+                        ) : todayStudents.length === 0 ? (
+                          <tr>
+                            <td colSpan={5} className="py-8 text-center text-slate-400 text-xs">
+                              Tidak ada jadwal piket hari ini.
+                            </td>
+                          </tr>
+                        ) : (
+                          todayStudents.map((student, idx) => {
+                            const taskName = getAssignedTask(
+                              student.dayOfWeek,
+                              student.orderIndex,
+                              dateInfo.isoWeek,
+                              dateInfo.isoYear
+                            );
+                            const log = todayLogs.find((l) => l.studentId === student.id);
 
-                          return (
-                            <tr
-                              key={student.id}
-                              className="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition-colors"
-                            >
-                              <td className="py-3.5 px-4 text-center text-xs font-medium text-slate-400">
-                                {idx + 1}
-                              </td>
-                              <td className="py-3.5 px-4">
-                                <span className="font-semibold text-slate-900 dark:text-white block">
-                                  {student.name}
-                                </span>
-                                <span className="text-[11px] text-slate-400">Kelas 10 SIJA B</span>
-                              </td>
-                              <td className="py-3.5 px-4">
-                                <TaskBadge task={taskName} size="sm" />
-                              </td>
-                              <td className="py-3.5 px-4">
-                                {log ? (
-                                  <StatusBadge status={log.status} size="sm" />
-                                ) : (
-                                  <span className="inline-flex items-center gap-1 text-xs text-slate-400 dark:text-slate-500">
-                                    <Clock className="w-3 h-3" />
-                                    <span>Belum Upload</span>
+                            return (
+                              <tr
+                                key={student.id}
+                                className="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition-colors"
+                              >
+                                <td className="py-3.5 px-4 text-center text-xs font-medium text-slate-400">
+                                  {idx + 1}
+                                </td>
+                                <td className="py-3.5 px-4">
+                                  <span className="font-semibold text-slate-900 dark:text-white block">
+                                    {student.name}
                                   </span>
-                                )}
-                              </td>
-                              <td className="py-3.5 px-4 text-center">
-                                <Link
-                                  href={`/unggah?studentId=${student.id}`}
-                                  className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold text-blue-600 bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/60 dark:text-blue-300 dark:hover:bg-blue-900/60 transition-colors"
-                                >
-                                  <UploadCloud className="w-3.5 h-3.5" />
-                                  <span>Upload</span>
-                                </Link>
-                              </td>
-                            </tr>
-                          );
-                        })
-                      )}
-                    </tbody>
-                  </table>
-                </div>
+                                  <span className="text-[11px] text-slate-400">Kelas 10 SIJA B</span>
+                                </td>
+                                <td className="py-3.5 px-4">
+                                  <TaskBadge task={taskName} size="sm" />
+                                </td>
+                                <td className="py-3.5 px-4">
+                                  {log ? (
+                                    <StatusBadge status={log.status} size="sm" />
+                                  ) : (
+                                    <span className="inline-flex items-center gap-1 text-xs text-slate-400 dark:text-slate-500">
+                                      <Clock className="w-3 h-3" />
+                                      <span>Belum Upload</span>
+                                    </span>
+                                  )}
+                                </td>
+                                <td className="py-3.5 px-4 text-center">
+                                  <Link
+                                    href={`/unggah?studentId=${student.id}`}
+                                    className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold text-blue-600 bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/60 dark:text-blue-300 dark:hover:bg-blue-900/60 transition-colors"
+                                  >
+                                    <UploadCloud className="w-3.5 h-3.5" />
+                                    <span>Upload</span>
+                                  </Link>
+                                </td>
+                              </tr>
+                            );
+                          })
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
               </div>
 
               {/* Feature Showcase Grid matching UI Mockup Banner */}

@@ -53,7 +53,8 @@ export default function AdminDashboardPage() {
     setFormattedToday(formatIndonesianDate(new Date()));
   }, []);
 
-  const currentDayOfWeek = dateInfo.dayOfWeek > 5 ? 1 : dateInfo.dayOfWeek;
+  const isWeekend = dateInfo.dayOfWeek > 5;
+  const currentDayOfWeek = isWeekend ? 1 : dateInfo.dayOfWeek;
 
   const loadDashboardData = async () => {
     try {
@@ -89,11 +90,13 @@ export default function AdminDashboardPage() {
 
   // Calculations
   const totalStudents = students.length || 36;
-  const todayStudents = students
-    .filter((s) => s.dayOfWeek === currentDayOfWeek)
-    .sort((a, b) => a.orderIndex - b.orderIndex);
+  const todayStudents = isWeekend
+    ? []
+    : students
+        .filter((s) => s.dayOfWeek === currentDayOfWeek)
+        .sort((a, b) => a.orderIndex - b.orderIndex);
 
-  const dutyTodayCount = todayStudents.length;
+  const dutyTodayCount = isWeekend ? 0 : todayStudents.length;
   const verifiedTodayCount = todayLogs.filter((l) => l.status === 'verified').length;
   const pendingTodayCount = todayLogs.filter((l) => l.status === 'pending').length;
   const excusedTodayCount = todayLogs.filter((l) => l.status === 'excused').length;
@@ -236,7 +239,7 @@ export default function AdminDashboardPage() {
               {dutyTodayCount}
             </span>
             <span className="text-[11px] text-slate-400 block mt-0.5">
-              Hari {DAY_NAMES[currentDayOfWeek]}
+              {isWeekend ? `Libur (${DAY_NAMES[dateInfo.dayOfWeek]})` : `Hari ${DAY_NAMES[currentDayOfWeek]}`}
             </span>
           </div>
         </div>
@@ -281,10 +284,10 @@ export default function AdminDashboardPage() {
           <div className="p-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
             <div>
               <h2 className="text-base font-bold text-slate-900 dark:text-white">
-                Jadwal Piket Hari Ini
+                {isWeekend ? 'Jadwal Hari Ini' : 'Jadwal Piket Hari Ini'}
               </h2>
               <p className="text-xs text-slate-400 mt-0.5">
-                {DAY_NAMES[currentDayOfWeek]}, {formattedToday}
+                {formattedToday} {isWeekend && '• Hari Libur Akhir Pekan'}
               </p>
             </div>
             <Link
@@ -298,7 +301,17 @@ export default function AdminDashboardPage() {
 
           {/* Mobile Card List (md:hidden) */}
           <div className="md:hidden divide-y divide-slate-100 dark:divide-slate-800">
-            {todayStudents.length === 0 ? (
+            {isWeekend ? (
+              <div className="py-10 text-center space-y-2">
+                <span className="text-2xl">🏖️</span>
+                <p className="text-sm font-bold text-slate-900 dark:text-white">
+                  Hari Libur Akhir Pekan ({DAY_NAMES[dateInfo.dayOfWeek]})
+                </p>
+                <p className="text-xs text-slate-400">
+                  Tidak ada petugas piket kelas hari ini. Piket aktif kembali pada hari Senin.
+                </p>
+              </div>
+            ) : todayStudents.length === 0 ? (
               <div className="py-8 text-center text-xs text-slate-400">
                 Tidak ada petugas piket terjadwal.
               </div>
@@ -386,7 +399,21 @@ export default function AdminDashboardPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                {todayStudents.length === 0 ? (
+                {isWeekend ? (
+                  <tr>
+                    <td colSpan={6} className="py-12 text-center">
+                      <div className="space-y-1">
+                        <span className="text-2xl">🏖️</span>
+                        <p className="text-sm font-bold text-slate-800 dark:text-slate-200">
+                          Hari Libur Akhir Pekan ({DAY_NAMES[dateInfo.dayOfWeek]})
+                        </p>
+                        <p className="text-xs text-slate-400">
+                          Tidak ada kegiatan piket kelas hari ini. Piket aktif kembali pada hari Senin.
+                        </p>
+                      </div>
+                    </td>
+                  </tr>
+                ) : todayStudents.length === 0 ? (
                   <tr>
                     <td colSpan={6} className="py-8 text-center text-xs text-slate-400">
                       Tidak ada petugas piket terjadwal.
