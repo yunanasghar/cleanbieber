@@ -274,7 +274,7 @@ export default function WeeklySchedulePage() {
             </div>
             <div className="flex items-center gap-1.5">
               <span className="w-2.5 h-2.5 rounded-full bg-blue-500 shrink-0" />
-              <span className="text-slate-600 dark:text-slate-400">Nyapu & Pel (Sore)</span>
+              <span className="text-slate-600 dark:text-slate-400">Nyapu (Sore)</span>
             </div>
             <div className="flex items-center gap-1.5">
               <span className="w-2.5 h-2.5 rounded-full bg-purple-500 shrink-0" />

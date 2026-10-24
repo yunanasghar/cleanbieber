@@ -213,7 +213,7 @@ export default function StudentHomePage() {
                 <div className="w-7 h-7 rounded-lg bg-white/20 backdrop-blur-xs flex items-center justify-center">
                   {selectedStudentTask === 'MBG' ? (
                     <Utensils className="w-4 h-4 text-white" />
-                  ) : selectedStudentTask === 'Nyapu & Pel' ? (
+                  ) : selectedStudentTask === 'Nyapu' ? (
                     <Sparkles className="w-4 h-4 text-white" />
                   ) : (
                     <HeartHandshake className="w-4 h-4 text-white" />
@@ -257,15 +257,15 @@ export default function StudentHomePage() {
                 <h2 className="text-lg font-extrabold tracking-tight">
                   {selectedStudentTask === 'MBG'
                     ? 'MBG (Makanan Bergizi Gratis)'
-                    : selectedStudentTask === 'Nyapu & Pel'
-                    ? 'Nyapu & Pel Kelas'
+                    : selectedStudentTask === 'Nyapu'
+                    ? 'Nyapu Kelas'
                     : 'Helper / Koordinator'}
                 </h2>
                 <div className="flex flex-wrap items-center gap-2 pt-0.5">
                   <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-white/20 text-blue-50 backdrop-blur-xs">
                     {selectedStudentTask === 'MBG'
                       ? 'Pukul 07:00 - 09:00 WIB'
-                      : selectedStudentTask === 'Nyapu & Pel'
+                      : selectedStudentTask === 'Nyapu'
                       ? 'Pukul 15:00 - 16:30 WIB'
                       : 'Pukul 07:00 - 16:30 WIB'}
                   </span>
@@ -660,8 +660,8 @@ export default function StudentHomePage() {
                         <span className="font-medium text-slate-700 dark:text-slate-200">Tugas Kamu:</span>{' '}
                         {selectedStudentTask === 'MBG'
                           ? 'MBG (Makanan Bergizi Gratis, 07:00 - 09:00)'
-                          : selectedStudentTask === 'Nyapu & Pel'
-                          ? 'Menyapu & Mengepel Kelas (15:00 - 16:30)'
+                          : selectedStudentTask === 'Nyapu'
+                          ? 'Menyapu Kelas (15:00 - 16:30)'
                           : 'Helper / Koordinator Kelas'}
                       </p>
                       <div className="flex items-center gap-2 pt-1">

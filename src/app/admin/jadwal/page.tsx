@@ -126,7 +126,7 @@ export default function AdminScheduleRotationPage() {
             Algoritma Rotasi Otomatis Bersih:
           </span>{' '}
           Roster hari tetap (Senin–Kamis 7 siswa, Jumat 8 siswa). Komposisi tugas selalu terjaga secara presisi:
-          4 siswa MBG, 2-3 siswa Nyapu & Pel, dan 1 siswa Helper. Pergeseran offset rotasi dihitung secara deterministik dari nomor minggu ISO.
+          4 siswa MBG, 2-3 siswa Nyapu, dan 1 siswa Helper. Pergeseran offset rotasi dihitung secara deterministik dari nomor minggu ISO.
         </div>
       </div>
 

@@ -15,10 +15,10 @@ describe('CleanBieber Rotation Engine Tests', () => {
       const slots = getBaseTaskSlots(day);
       assert.equal(slots.length, 7, `Day ${day} must have 7 slots`);
       const mbg = slots.filter((t) => t === 'MBG').length;
-      const nyapu = slots.filter((t) => t === 'Nyapu & Pel').length;
+      const nyapu = slots.filter((t) => t === 'Nyapu').length;
       const helper = slots.filter((t) => t === 'Helper').length;
       assert.equal(mbg, 4, `Day ${day} must have exactly 4 MBG`);
-      assert.equal(nyapu, 2, `Day ${day} must have exactly 2 Nyapu & Pel`);
+      assert.equal(nyapu, 2, `Day ${day} must have exactly 2 Nyapu`);
       assert.equal(helper, 1, `Day ${day} must have exactly 1 Helper`);
     }
   });
@@ -27,10 +27,10 @@ describe('CleanBieber Rotation Engine Tests', () => {
     const slots = getBaseTaskSlots(5);
     assert.equal(slots.length, 8, 'Friday must have 8 slots');
     const mbg = slots.filter((t) => t === 'MBG').length;
-    const nyapu = slots.filter((t) => t === 'Nyapu & Pel').length;
+    const nyapu = slots.filter((t) => t === 'Nyapu').length;
     const helper = slots.filter((t) => t === 'Helper').length;
     assert.equal(mbg, 4, 'Friday must have exactly 4 MBG');
-    assert.equal(nyapu, 3, 'Friday must have exactly 3 Nyapu & Pel');
+    assert.equal(nyapu, 3, 'Friday must have exactly 3 Nyapu');
     assert.equal(helper, 1, 'Friday must have exactly 1 Helper');
   });
 
@@ -45,7 +45,7 @@ describe('CleanBieber Rotation Engine Tests', () => {
           }
           assert.equal(assignments.length, 7);
           assert.equal(assignments.filter((t) => t === 'MBG').length, 4);
-          assert.equal(assignments.filter((t) => t === 'Nyapu & Pel').length, 2);
+          assert.equal(assignments.filter((t) => t === 'Nyapu').length, 2);
           assert.equal(assignments.filter((t) => t === 'Helper').length, 1);
         }
       }
@@ -61,7 +61,7 @@ describe('CleanBieber Rotation Engine Tests', () => {
         }
         assert.equal(assignments.length, 8);
         assert.equal(assignments.filter((t) => t === 'MBG').length, 4);
-        assert.equal(assignments.filter((t) => t === 'Nyapu & Pel').length, 3);
+        assert.equal(assignments.filter((t) => t === 'Nyapu').length, 3);
         assert.equal(assignments.filter((t) => t === 'Helper').length, 1);
       }
     }
@@ -79,7 +79,7 @@ describe('CleanBieber Rotation Engine Tests', () => {
       tasksAcross7Weeks.add(getAssignedTask(1, 0, w, 2025));
     }
     assert.equal(tasksAcross7Weeks.has('MBG'), true);
-    assert.equal(tasksAcross7Weeks.has('Nyapu & Pel'), true);
+    assert.equal(tasksAcross7Weeks.has('Nyapu'), true);
     assert.equal(tasksAcross7Weeks.has('Helper'), true);
   });
 

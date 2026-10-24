@@ -39,7 +39,7 @@ Assigned task: ${taskName}
 
 Context of duties:
 - "MBG": Distribution or preparation of Makanan Bergizi Gratis, clean desks, food boxes, meal prep or tidy eating area.
-- "Nyapu & Pel": Sweeping and mopping classroom floor, broom, dustpan, mop bucket, clean and shiny tiles, neat desks.
+- "Nyapu" (or "Nyapu & Pel"): Sweeping classroom floor, broom, dustpan, clean tiles, neat desks and chairs.
 - "Helper": Classroom coordination, wiping whiteboards, emptying trash bins, organizing classroom supplies.
 
 Evaluate:

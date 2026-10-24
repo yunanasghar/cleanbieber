@@ -4,7 +4,7 @@
  * Timezone: Asia/Jakarta
  */
 
-export type TaskType = 'MBG' | 'Nyapu & Pel' | 'Helper';
+export type TaskType = 'MBG' | 'Nyapu' | 'Helper';
 
 export interface TaskInfo {
   type: TaskType;
@@ -28,12 +28,12 @@ export const TASK_DEFINITIONS: Record<TaskType, TaskInfo> = {
     badgeText: 'text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800',
     dotColor: 'bg-emerald-500',
   },
-  'Nyapu & Pel': {
-    type: 'Nyapu & Pel',
-    title: 'Nyapu & Pel',
-    fullName: 'Menyapu & Mengepel Ruang Kelas',
+  'Nyapu': {
+    type: 'Nyapu',
+    title: 'Nyapu',
+    fullName: 'Menyapu Ruang Kelas',
     timeRange: 'Pukul 15:00 - 16:30',
-    description: 'Menyapu seluruh lantai kelas, mengepel, membersihkan kolong meja, dan merapikan kursi.',
+    description: 'Menyapu seluruh lantai kelas, membersihkan kolong meja, dan merapikan kursi.',
     badgeBg: 'bg-blue-50 dark:bg-blue-950/40',
     badgeText: 'text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800',
     dotColor: 'bg-blue-500',
@@ -62,16 +62,16 @@ export const DAY_NAMES: Record<number, string> = {
 
 /**
  * Returns the base task-slots array for a given dayOfWeek.
- * Monday (1) to Thursday (4): 7 students -> 4 MBG, 2 Nyapu & Pel, 1 Helper
- * Friday (5): 8 students -> 4 MBG, 3 Nyapu & Pel, 1 Helper
+ * Monday (1) to Thursday (4): 7 students -> 4 MBG, 2 Nyapu, 1 Helper
+ * Friday (5): 8 students -> 4 MBG, 3 Nyapu, 1 Helper
  */
 export function getBaseTaskSlots(dayOfWeek: number): TaskType[] {
   if (dayOfWeek === 5) {
-    // Friday: 4 MBG, 3 Nyapu & Pel, 1 Helper
-    return ['MBG', 'MBG', 'MBG', 'MBG', 'Nyapu & Pel', 'Nyapu & Pel', 'Nyapu & Pel', 'Helper'];
+    // Friday: 4 MBG, 3 Nyapu, 1 Helper
+    return ['MBG', 'MBG', 'MBG', 'MBG', 'Nyapu', 'Nyapu', 'Nyapu', 'Helper'];
   }
-  // Monday to Thursday: 4 MBG, 2 Nyapu & Pel, 1 Helper
-  return ['MBG', 'MBG', 'MBG', 'MBG', 'Nyapu & Pel', 'Nyapu & Pel', 'Helper'];
+  // Monday to Thursday: 4 MBG, 2 Nyapu, 1 Helper
+  return ['MBG', 'MBG', 'MBG', 'MBG', 'Nyapu', 'Nyapu', 'Helper'];
 }
 
 /**

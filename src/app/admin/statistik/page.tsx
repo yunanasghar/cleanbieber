@@ -54,8 +54,10 @@ export default function AdminStatisticsPage() {
   const rate = total > 0 ? Math.round((verified / total) * 100) : 0;
 
   // Breakdown by task
-  const taskStats = (['MBG', 'Nyapu & Pel', 'Helper'] as const).map((task) => {
-    const list = logs.filter((l) => l.taskName === task);
+  const taskStats = (['MBG', 'Nyapu', 'Helper'] as const).map((task) => {
+    const list = logs.filter((l) =>
+      task === 'Nyapu' ? l.taskName === 'Nyapu' || (l.taskName as string) === 'Nyapu & Pel' : l.taskName === task
+    );
     const ver = list.filter((l) => l.status === 'verified').length;
     const rej = list.filter((l) => l.status === 'rejected').length;
     return {

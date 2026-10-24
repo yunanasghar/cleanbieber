@@ -42,7 +42,7 @@ export async function POST(req: NextRequest) {
     const mbgLogs = logs.filter((l) => l.taskName === 'MBG');
     const mbgVerified = mbgLogs.filter((l) => l.status === 'verified').length;
 
-    const nyapuLogs = logs.filter((l) => l.taskName === 'Nyapu & Pel');
+    const nyapuLogs = logs.filter((l) => l.taskName === 'Nyapu' || (l.taskName as string) === 'Nyapu & Pel');
     const nyapuVerified = nyapuLogs.filter((l) => l.status === 'verified').length;
 
     const helperLogs = logs.filter((l) => l.taskName === 'Helper');
@@ -74,7 +74,7 @@ export async function POST(req: NextRequest) {
 
 📋 *Rincian Kehadiran per Tugas:*
 • 🍱 MBG (Makanan Bergizi): ${mbgVerified}/${mbgLogs.length} selesai
-• 🧹 Nyapu & Pel Kelas: ${nyapuVerified}/${nyapuLogs.length} selesai
+• 🧹 Nyapu Kelas: ${nyapuVerified}/${nyapuLogs.length} selesai
 • 🤝 Helper (Koordinator): ${helperVerified}/${helperLogs.length} selesai
 
 📎 *Lampiran Dokumen:*

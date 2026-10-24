@@ -135,7 +135,7 @@ export function buildDailyReminderText(params: {
   const appUrl = params.appUrl || process.env.APP_URL || 'https://cleanbieber.vercel.app';
 
   const mbgStudents = assignments.filter((a) => a.taskName === 'MBG');
-  const nyapuStudents = assignments.filter((a) => a.taskName === 'Nyapu & Pel');
+  const nyapuStudents = assignments.filter((a) => a.taskName === 'Nyapu' || (a.taskName as string) === 'Nyapu & Pel');
   const helperStudents = assignments.filter((a) => a.taskName === 'Helper');
 
   const mbgList = mbgStudents.map((s, i) => `${i + 1}. ${s.name}`).join('\n');
@@ -151,7 +151,7 @@ Total petugas: ${assignments.length} siswa
 🍱 *MBG (Makanan Bergizi Gratis) — ${mbgStudents.length} orang*
 ${mbgList}
 
-🧹 *Nyapu & Pel — ${nyapuStudents.length} orang*
+🧹 *Nyapu — ${nyapuStudents.length} orang*
 ${nyapuList}
 
 🤝 *Helper — ${helperStudents.length} orang*
@@ -237,7 +237,7 @@ export function buildAdminDailyBriefingText(params: {
 
   // Tomorrow duty breakdown
   const tomorrowMbg = params.tomorrowAssignments.filter((s) => s.taskName === 'MBG');
-  const tomorrowNyapu = params.tomorrowAssignments.filter((s) => s.taskName === 'Nyapu & Pel');
+  const tomorrowNyapu = params.tomorrowAssignments.filter((s) => s.taskName === 'Nyapu' || (s.taskName as string) === 'Nyapu & Pel');
   const tomorrowHelper = params.tomorrowAssignments.filter((s) => s.taskName === 'Helper');
 
   let text = `🧹 *LAPORAN HARIAN PIKET — ${classLabel.toUpperCase()}*\n`;
@@ -250,6 +250,7 @@ export function buildAdminDailyBriefingText(params: {
     text += `Tidak ada jadwal piket kelas hari ini. Siswa dan kegiatan sekolah libur.\n\n`;
   } else {
     // Categorize today's duty students
+    const formatTaskBadge = (task: string) => (task === 'Nyapu & Pel' ? 'Nyapu' : task);
     const verifiedList = params.todayDutyStudents.filter((s) => s.status === 'verified');
     const excusedList = params.todayDutyStudents.filter((s) => s.status === 'excused');
     const pendingReviewList = params.todayDutyStudents.filter((s) => s.status === 'pending');
@@ -261,7 +262,7 @@ export function buildAdminDailyBriefingText(params: {
     // 1. Sudah Hadir & Terverifikasi
     text += `✅ *Hadir & Terverifikasi (${verifiedList.length}/${params.todayDutyStudents.length}):*\n`;
     if (verifiedList.length > 0) {
-      text += verifiedList.map((s, i) => `  ${i + 1}. ${s.name} [${s.taskName}]`).join('\n') + '\n';
+      text += verifiedList.map((s, i) => `  ${i + 1}. ${s.name} [${formatTaskBadge(s.taskName)}]`).join('\n') + '\n';
     } else {
       text += `  _(Belum ada bukti yang disetujui)_\n`;
     }
@@ -272,7 +273,7 @@ export function buildAdminDailyBriefingText(params: {
       text += `⏳ *Menunggu Verifikasi Admin (${pendingReviewList.length}):*\n`;
       text +=
         pendingReviewList
-          .map((s, i) => `  ${i + 1}. ${s.name} [${s.taskName}] ➔ Foto sudah diunggah, menunggu persetujuan`)
+          .map((s, i) => `  ${i + 1}. ${s.name} [${formatTaskBadge(s.taskName)}] ➔ Foto sudah diunggah, menunggu persetujuan`)
           .join('\n') + '\n\n';
     }
 
@@ -283,7 +284,7 @@ export function buildAdminDailyBriefingText(params: {
         excusedList
           .map(
             (s, i) =>
-              `  ${i + 1}. ${s.name} [${s.taskName}] ➔ ${s.rejectionReason || 'Izin/Sakit resmi terkonfirmasi'}`
+              `  ${i + 1}. ${s.name} [${formatTaskBadge(s.taskName)}] ➔ ${s.rejectionReason || 'Izin/Sakit resmi terkonfirmasi'}`
           )
           .join('\n') + '\n\n';
     }
@@ -293,7 +294,7 @@ export function buildAdminDailyBriefingText(params: {
     if (unsubmittedList.length > 0) {
       text +=
         unsubmittedList
-          .map((s, i) => `  ${i + 1}. ${s.name} [${s.taskName}] ➔ ❗Segera konfirmasi & upload bukti!`)
+          .map((s, i) => `  ${i + 1}. ${s.name} [${formatTaskBadge(s.taskName)}] ➔ ❗Segera konfirmasi & upload bukti!`)
           .join('\n') + '\n';
     } else {
       text += `  _(Semua petugas hari ini sudah konfirmasi/upload)_\n`;
@@ -307,7 +308,7 @@ export function buildAdminDailyBriefingText(params: {
         rejectedList
           .map(
             (s, i) =>
-              `  ${i + 1}. ${s.name} [${s.taskName}] ${s.rejectionReason ? `(Alasan: ${s.rejectionReason})` : ''}`
+              `  ${i + 1}. ${s.name} [${formatTaskBadge(s.taskName)}] ${s.rejectionReason ? `(Alasan: ${s.rejectionReason})` : ''}`
           )
           .join('\n') + '\n\n';
     }
@@ -322,7 +323,7 @@ export function buildAdminDailyBriefingText(params: {
   text += tomorrowMbg.map((s, i) => `  ${i + 1}. ${s.name}`).join('\n') || '  -';
   text += `\n\n`;
 
-  text += `🧹 *Nyapu & Pel (15:00 - 16:30 WIB):*\n`;
+  text += `🧹 *Nyapu (15:00 - 16:30 WIB):*\n`;
   text += tomorrowNyapu.map((s, i) => `  ${i + 1}. ${s.name}`).join('\n') || '  -';
   text += `\n\n`;
 

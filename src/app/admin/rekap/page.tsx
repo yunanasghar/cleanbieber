@@ -66,8 +66,10 @@ export default function AdminWeeklyRecapPage() {
   const excusedPercent = total > 0 ? ((excused / total) * 100).toFixed(1) : '0.0';
 
   // Task breakdown
-  const taskRows = (['MBG', 'Nyapu & Pel', 'Helper'] as const).map((t) => {
-    const subset = logs.filter((l) => l.taskName === t);
+  const taskRows = (['MBG', 'Nyapu', 'Helper'] as const).map((t) => {
+    const subset = logs.filter((l) =>
+      t === 'Nyapu' ? l.taskName === 'Nyapu' || (l.taskName as string) === 'Nyapu & Pel' : l.taskName === t
+    );
     const ver = subset.filter((l) => l.status === 'verified').length;
     const exc = subset.filter((l) => l.status === 'excused').length;
     const rej = subset.filter((l) => l.status === 'rejected').length;

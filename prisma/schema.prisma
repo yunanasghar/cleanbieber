@@ -60,7 +60,7 @@ model AttendanceLog {
   dateString        String    // ISO formatted "YYYY-MM-DD" in Asia/Jakarta
   studentId         String
   student           Student   @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  taskName          String    // "MBG" | "Nyapu & Pel" | "Helper"
+  taskName          String    // "MBG" | "Nyapu" | "Helper"
   tempPhotoUrl      String?
   photoPublicId     String?
   aiStatus          String?   // "VALID" | "INVALID" | "UNAVAILABLE" | "FAILED"

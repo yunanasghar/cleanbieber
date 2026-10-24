@@ -13,7 +13,7 @@
 
 ### Pengalaman Siswa (Tanpa Perlu Akun)
 - Memilih nama dari roster 36 siswa Kelas 10 SIJA B.
-- Mengetahui jadwal hari tetap dan penugasan spesifik hari ini (MBG, Nyapu & Pel, Helper).
+- Mengetahui jadwal hari tetap dan penugasan spesifik hari ini (MBG, Nyapu, Helper).
 - Mengunggah foto bukti kebersihan langsung dari kamera ponsel atau galeri.
 - Memantau status verifikasi (Pending, Verified, Rejected) secara langsung dan transparan.
 
@@ -41,11 +41,11 @@ Roster kelas terdiri dari **36 siswa** dengan pembagian hari piket tetap:
 ### Komposisi Tugas per Hari
 - **Senin s.d. Kamis (7 siswa):**
   - **MBG (Makanan Bergizi Gratis):** 4 siswa (07:00 - 09:00)
-  - **Nyapu & Pel:** 2 siswa (15:00 - 16:30)
+  - **Nyapu:** 2 siswa (15:00 - 16:30)
   - **Helper:** 1 siswa (07:00 - 16:30)
 - **Jumat (8 siswa):**
   - **MBG:** 4 siswa
-  - **Nyapu & Pel:** 3 siswa
+  - **Nyapu:** 3 siswa
   - **Helper:** 1 siswa
 
 ### Jaminan Matematis Algoritma:
@@ -54,7 +54,7 @@ Roster kelas terdiri dari **36 siswa** dengan pembagian hari piket tetap:
    $$\text{offset} = (| \text{isoYear} \times 53 + \text{isoWeek} |) \pmod N$$
    Tugas untuk siswa dengan urutan $i$ adalah:
    $$\text{assignedTask} = \text{baseSlots}[(i + \text{offset}) \pmod N]$$
-3. Karena pemetaan $(i + \text{offset}) \pmod N$ merupakan permutasi bijektif pada indeks $0 \dots N-1$, jumlah kuota tugas MBG, Nyapu & Pel, dan Helper **pasti terpenuhi 100% tepat** setiap minggunya, tanpa duplikasi, dan berotasi secara adil antarminggu.
+3. Karena pemetaan $(i + \text{offset}) \pmod N$ merupakan permutasi bijektif pada indeks $0 \dots N-1$, jumlah kuota tugas MBG, Nyapu, dan Helper **pasti terpenuhi 100% tepat** setiap minggunya, tanpa duplikasi, dan berotasi secara adil antarminggu.
 
 ---
 
@@ -183,7 +183,7 @@ cleanbieber/
 │   │   ├── PublicNavbar.tsx  # Header navigasi siswa & mobile menu
 │   │   ├── AdminSidebar.tsx  # Sidebar navigasi admin desktop & drawer
 │   │   ├── ThemeToggle.tsx   # Pengalih tema (Light / Dark mode)
-│   │   ├── TaskBadge.tsx     # Pill badge MBG, Nyapu & Pel, Helper
+│   │   ├── TaskBadge.tsx     # Pill badge MBG, Nyapu, Helper
 │   │   ├── StatusBadge.tsx   # Pill badge Pending, Verified, Rejected
 │   │   └── VerificationModal.tsx # Modal detail verifikasi & AI score
 │   └── lib/

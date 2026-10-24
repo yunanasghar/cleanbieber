@@ -8,7 +8,7 @@ const ExcuseSchema = z.object({
   action: z.enum(['excuse', 'remove']).default('excuse'),
   studentId: z.string().optional(),
   dateString: z.string().optional(),
-  taskName: z.enum(['MBG', 'Nyapu & Pel', 'Helper']).optional(),
+  taskName: z.enum(['MBG', 'Nyapu', 'Nyapu & Pel', 'Helper']).optional(),
   excuseType: z.enum(['sakit', 'izin']).default('sakit'),
   reason: z.string().max(200).optional(),
   attendanceId: z.string().optional(),
@@ -42,11 +42,12 @@ export async function POST(req: NextRequest) {
     const allStudents = await getStudents();
     const student = allStudents.find((s) => s.id === studentId);
     const studentName = student ? student.name : 'Siswa';
+    const normalizedTask: TaskType = (taskName === 'Nyapu & Pel' ? 'Nyapu' : taskName) as TaskType;
 
     const record = await markStudentExcused({
       studentId,
       dateString,
-      taskName: taskName as TaskType,
+      taskName: normalizedTask,
       excuseType,
       reason,
       adminId: admin.id,
@@ -57,7 +58,7 @@ export async function POST(req: NextRequest) {
     await addAuditLog(
       'MARK_EXCUSED',
       admin.id,
-      `${admin.name} menandai ${studentName} sebagai ${labelType} untuk piket ${taskName} pada ${dateString}.${
+      `${admin.name} menandai ${studentName} sebagai ${labelType} untuk piket ${normalizedTask} pada ${dateString}.${
         reason ? ` Keterangan: ${reason}` : ''
       }`
     );

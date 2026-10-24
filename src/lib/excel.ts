@@ -145,9 +145,11 @@ export async function generateWeeklyExcelReport(data: WeeklyReportData): Promise
     cell.alignment = { vertical: 'middle', horizontal: 'center' };
   });
 
-  const tasks = ['MBG', 'Nyapu & Pel', 'Helper'] as const;
+  const tasks = ['MBG', 'Nyapu', 'Helper'] as const;
   tasks.forEach((t) => {
-    const subset = data.attendanceLogs.filter((l) => l.taskName === t);
+    const subset = data.attendanceLogs.filter((l) =>
+      t === 'Nyapu' ? l.taskName === 'Nyapu' || (l.taskName as string) === 'Nyapu & Pel' : l.taskName === t
+    );
     const verified = subset.filter((l) => l.status === 'verified').length;
     const excused = subset.filter((l) => l.status === 'excused').length;
     const rejected = subset.filter((l) => l.status === 'rejected').length;

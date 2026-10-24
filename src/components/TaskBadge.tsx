@@ -3,14 +3,15 @@ import type { TaskType } from '@/lib/rotation';
 import { TASK_DEFINITIONS } from '@/lib/rotation';
 import { Utensils, Sparkles, HeartHandshake } from 'lucide-react';
 
-export default function TaskBadge({ task, size = 'sm' }: { task: TaskType; size?: 'sm' | 'md' | 'lg' }) {
-  const info = TASK_DEFINITIONS[task] || TASK_DEFINITIONS['MBG'];
+export default function TaskBadge({ task, size = 'sm' }: { task: TaskType | string; size?: 'sm' | 'md' | 'lg' }) {
+  const normalizedTask: TaskType = (task === 'Nyapu & Pel' ? 'Nyapu' : task) as TaskType;
+  const info = TASK_DEFINITIONS[normalizedTask] || TASK_DEFINITIONS['MBG'];
 
   const getIcon = () => {
-    switch (task) {
+    switch (normalizedTask) {
       case 'MBG':
         return <Utensils className={size === 'sm' ? 'w-3 h-3' : 'w-4 h-4'} />;
-      case 'Nyapu & Pel':
+      case 'Nyapu':
         return <Sparkles className={size === 'sm' ? 'w-3 h-3' : 'w-4 h-4'} />;
       case 'Helper':
         return <HeartHandshake className={size === 'sm' ? 'w-3 h-3' : 'w-4 h-4'} />;

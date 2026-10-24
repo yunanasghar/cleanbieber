@@ -40,7 +40,7 @@ describe('CleanBieber Daily Reminder & WhatsApp Tests', () => {
     const assignments = [
       { name: 'Ahmad Rizki', taskName: 'MBG' as const },
       { name: 'Siti Nurhaliza', taskName: 'MBG' as const },
-      { name: 'Budi Santoso', taskName: 'Nyapu & Pel' as const },
+      { name: 'Budi Santoso', taskName: 'Nyapu' as const },
       { name: 'Citra Dewi', taskName: 'Helper' as const },
     ];
 
@@ -69,7 +69,7 @@ describe('CleanBieber Daily Reminder & WhatsApp Tests', () => {
       todayDutyStudents: [
         { name: 'Ahmad Rizki', taskName: 'MBG', status: 'verified' },
         { name: 'Siti Nurhaliza', taskName: 'MBG', status: 'excused', rejectionReason: 'Sakit: Demam tinggi' },
-        { name: 'Budi Santoso', taskName: 'Nyapu & Pel', status: 'unsubmitted' },
+        { name: 'Budi Santoso', taskName: 'Nyapu', status: 'unsubmitted' },
       ],
       tomorrowDate: '2026-10-25',
       tomorrowDayOfWeek: 2,
@@ -84,7 +84,7 @@ describe('CleanBieber Daily Reminder & WhatsApp Tests', () => {
     assert.ok(briefing.includes('Izin / Sakit Resmi (1)'));
     assert.ok(briefing.includes('Siti Nurhaliza [MBG] ➔ Sakit: Demam tinggi'));
     assert.ok(briefing.includes('BELUM KONFIRMASI / BELUM UPLOAD (1)'));
-    assert.ok(briefing.includes('Budi Santoso [Nyapu & Pel]'));
+    assert.ok(briefing.includes('Budi Santoso [Nyapu]'));
   });
 });
 

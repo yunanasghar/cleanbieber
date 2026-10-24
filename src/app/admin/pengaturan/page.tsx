@@ -381,14 +381,14 @@ export default function AdminSettingsPage() {
 
 ✅ *Hadir & Terverifikasi (2/7):*
   1. Siti Nurhaliza [MBG]
-  2. Budi Santoso [Nyapu & Pel]
+  2. Budi Santoso [Nyapu]
 
 ⏳ *Menunggu Verifikasi Admin (1):*
   1. Citra Dewi [MBG] ➔ Foto sudah diunggah, menunggu persetujuan
 
 ⚠️ *BELUM KONFIRMASI / BELUM UPLOAD (4):*
   1. Ahmad Rizki [MBG] ➔ ❗Segera konfirmasi & upload bukti!
-  2. Daffa Pratama [Nyapu & Pel] ➔ ❗Segera konfirmasi & upload bukti!
+  2. Daffa Pratama [Nyapu] ➔ ❗Segera konfirmasi & upload bukti!
   3. Nayla Putri [Helper] ➔ ❗Segera konfirmasi & upload bukti!
   4. Rizky Maulana [Helper] ➔ ❗Segera konfirmasi & upload bukti!
 
@@ -402,7 +402,7 @@ export default function AdminSettingsPage() {
   3. Joko Susilo
   4. Lia Anggraeni
 
-🧹 *Nyapu & Pel (15:00 - 16:30 WIB):*
+🧹 *Nyapu (15:00 - 16:30 WIB):*
   1. Muhammad Iqbal
   2. Nabila Hasanah
 
