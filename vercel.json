@@ -6,7 +6,7 @@
     },
     {
       "path": "/api/cron/weekly-recap",
-      "schedule": "0 10 * * 5"
+      "schedule": "0 13 * * 5"
     },
     {
       "path": "/api/cron/cleanup-retry",

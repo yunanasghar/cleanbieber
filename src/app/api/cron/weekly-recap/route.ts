@@ -1,9 +1,15 @@
 import crypto from 'node:crypto';
 import { NextRequest, NextResponse, connection } from 'next/server';
-import { getStudents, getAttendanceLogs, getSystemSettings, hasNotificationBeenSent, recordNotificationLog } from '@/lib/db';
+import {
+  getStudents,
+  getAttendanceLogs,
+  getSystemSettings,
+  hasNotificationBeenSent,
+  recordNotificationLog,
+} from '@/lib/db';
 import { getISOWeekInfo, getWeekDateRange } from '@/lib/rotation';
 import { generateWeeklyExcelReport } from '@/lib/excel';
-import { sendWhatsAppMessage } from '@/lib/fonnte';
+import { sendWhatsAppToMultiple } from '@/lib/fonnte';
 
 function verifyCronSecret(req: NextRequest): boolean {
   const authHeader = req.headers.get('authorization');
@@ -35,13 +41,14 @@ export async function GET(req: NextRequest) {
 
   try {
     const settings = await getSystemSettings();
-    const adminPhone = settings.adminWhatsAppNumber;
+    const adminPhones = settings.adminWhatsAppNumbers;
 
     const { isoWeek, isoYear, dateString } = getISOWeekInfo();
     const { startDate, endDate, label } = getWeekDateRange(isoWeek, isoYear);
 
-    // Duplicate check
-    const alreadySent = await hasNotificationBeenSent('WEEKLY_RECAP', dateString, adminPhone);
+    // Duplicate check for primary admin
+    const primaryAdmin = adminPhones[0] || '089673038689';
+    const alreadySent = await hasNotificationBeenSent('WEEKLY_RECAP', dateString, primaryAdmin);
     if (alreadySent) {
       return NextResponse.json({
         skipped: true,
@@ -59,6 +66,18 @@ export async function GET(req: NextRequest) {
     const rejectedCount = logs.filter((l) => l.status === 'rejected').length;
     const pendingCount = logs.filter((l) => l.status === 'pending').length;
 
+    // Task breakdown
+    const mbgLogs = logs.filter((l) => l.taskName === 'MBG');
+    const mbgVerified = mbgLogs.filter((l) => l.status === 'verified').length;
+
+    const nyapuLogs = logs.filter((l) => l.taskName === 'Nyapu & Pel');
+    const nyapuVerified = nyapuLogs.filter((l) => l.status === 'verified').length;
+
+    const helperLogs = logs.filter((l) => l.taskName === 'Helper');
+    const helperVerified = helperLogs.filter((l) => l.status === 'verified').length;
+
+    const percent = students.length ? Math.round((verifiedCount / students.length) * 100) : 0;
+
     // Generate Excel attachment
     const excelBuffer = await generateWeeklyExcelReport({
       weekLabel: label,
@@ -68,38 +87,48 @@ export async function GET(req: NextRequest) {
       attendanceLogs: logs,
     });
 
-    const filename = `Rekap_Piket_SIJA_B_W${isoWeek}_${isoYear}.xlsx`;
+    const filename = `Rekap_Piket_10SIJAB_W${isoWeek}_${isoYear}.xlsx`;
+    const appUrl = process.env.APP_URL || 'https://cleanbieber.vercel.app';
 
-    const message = `📊 *REKAPITULASI MINGGUAN PIKET KELAS*
+    const message = `📊 *REKAPITULASI MINGGUAN PIKET — ${settings.classLabel.toUpperCase()}*
+📅 *Periode:* ${label} (${startDate} s.d. ${endDate})
+━━━━━━━━━━━━━━━━━━━━━
 
-Kelas: ${settings.classLabel}
-Periode: ${label} (${startDate} s.d. ${endDate})
+📈 *RINGKASAN KEHADIRAN KELAS (Total 36 Siswa):*
+• ✅ Hadir & Terverifikasi: *${verifiedCount} Siswa* (${percent}%)
+• ⏳ Menunggu Verifikasi: ${pendingCount} Siswa
+• ❌ Tidak Hadir / Ditolak: ${rejectedCount} Siswa
 
-📈 *Ringkasan Kehadiran:*
-• Total Tugas Selesai Diajukan: ${totalSubmissions}
-• Terverifikasi: ${verifiedCount} (${totalSubmissions ? Math.round((verifiedCount / totalSubmissions) * 100) : 0}%)
-• Ditolak: ${rejectedCount}
-• Menunggu Verifikasi: ${pendingCount}
+📋 *Rincian Kehadiran per Tugas:*
+• 🍱 MBG (Makanan Bergizi): ${mbgVerified}/${mbgLogs.length} selesai
+• 🧹 Nyapu & Pel Kelas: ${nyapuVerified}/${nyapuLogs.length} selesai
+• 🤝 Helper (Koordinator): ${helperVerified}/${helperLogs.length} selesai
 
-Dokumen rekapitulasi lengkap terlampir dalam format Microsoft Excel (.xlsx).
+📎 *Lampiran Dokumen:*
+File rekapitulasi resmi Microsoft Excel (.xlsx) terlampir langsung pada pesan ini.
 
-🔗 *Dashboard Admin:* ${process.env.APP_URL || 'https://cleanbieber.vercel.app'}/admin/rekap`;
+🔗 Dashboard Admin: ${appUrl}/admin/rekap
 
-    const sendResult = await sendWhatsAppMessage(adminPhone, message, excelBuffer, filename);
+_Pesan otomatis dikirim setiap Jumat malam pukul 20:00 WIB ke seluruh admin & pengurus kelas._`;
 
-    await recordNotificationLog(
-      'WEEKLY_RECAP',
-      dateString,
-      adminPhone,
-      sendResult.success ? 'SUCCESS' : 'FAILED'
-    );
+    // Send to all admin phone numbers with Excel attachment!
+    const sendResult = await sendWhatsAppToMultiple(adminPhones, message, excelBuffer, filename);
+
+    for (const phone of adminPhones) {
+      await recordNotificationLog(
+        'WEEKLY_RECAP',
+        dateString,
+        phone,
+        sendResult.sent > 0 ? 'SUCCESS' : 'FAILED'
+      );
+    }
 
     return NextResponse.json({
-      success: sendResult.success,
+      success: sendResult.sent > 0,
       weekLabel: label,
-      recipient: adminPhone,
-      fonnteStatus: sendResult.status,
-      message: sendResult.message,
+      recipients: adminPhones,
+      sendResult,
+      message,
     });
   } catch (error) {
     console.error('Error in weekly recap cron:', error);

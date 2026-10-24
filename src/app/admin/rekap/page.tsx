@@ -97,15 +97,25 @@ export default function AdminWeeklyRecapPage() {
     setWaNotice(null);
     try {
       setSendingWa(true);
-      const res = await fetch('/api/cron/weekly-recap', {
+      const res = await fetch('/api/admin/broadcast-weekly-recap', {
+        method: 'POST',
         headers: {
-          Authorization: `Bearer ${process.env.NEXT_PUBLIC_CRON_SECRET || 'dev-secret'}`,
+          'Content-Type': 'application/json',
         },
+        body: JSON.stringify({
+          week: selectedWeek,
+          year: selectedYear,
+        }),
       });
       const data = await res.json();
-      setWaNotice(data.message || 'Rekap mingguan telah diproses ke WhatsApp admin.');
-    } catch {
-      setWaNotice('Gagal mengirimkan rekap WhatsApp.');
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'Gagal mengirim rekap mingguan');
+      }
+      setWaNotice(
+        `Laporan rekap mingguan dan file Excel (${data.filename}) berhasil dikirimkan ke ${data.totalRecipients} nomor admin WhatsApp!`
+      );
+    } catch (err) {
+      setWaNotice(err instanceof Error ? err.message : 'Gagal mengirimkan rekap WhatsApp.');
     } finally {
       setSendingWa(false);
     }
