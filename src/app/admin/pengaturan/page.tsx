@@ -42,16 +42,14 @@ export default function AdminSettingsPage() {
         const data = await res.json();
         if (data.settings) {
           setSettings(data.settings);
-          const numbers = data.settings.adminWhatsAppNumbers || [data.settings.adminWhatsAppNumber || '089673038689'];
-          setAdminPhonesInput(numbers.join(', '));
+          const numbers = data.settings.adminWhatsAppNumbers || [data.settings.adminWhatsAppNumber];
+          if (numbers.length > 0 && numbers[0]) {
+            setAdminPhonesInput(numbers.join(', '));
+          }
         }
-      } else {
-        // Fallback
-        setAdminPhonesInput('089673038689');
       }
     } catch (e) {
-      console.error(e);
-      setAdminPhonesInput('089673038689');
+      console.error('Failed to load settings:', e);
     }
   };
 

@@ -9,11 +9,18 @@ export async function GET() {
     await requireAdmin();
     const settings = await getSystemSettings();
     return NextResponse.json({ settings });
-  } catch (error) {
-    if (error instanceof Error && error.message === 'UNAUTHORIZED') {
+  } catch (error: any) {
+    if (error?.message === 'UNAUTHORIZED') {
       return NextResponse.json({ error: 'Akses ditolak' }, { status: 401 });
     }
-    return NextResponse.json({ error: 'Gagal mengambil pengaturan' }, { status: 500 });
+    console.error('Settings GET error:', error);
+    return NextResponse.json(
+      {
+        error: 'Gagal mengambil pengaturan',
+        details: error?.message || String(error),
+      },
+      { status: 500 }
+    );
   }
 }
 
@@ -71,11 +78,17 @@ export async function POST(req: NextRequest) {
     }
 
     return NextResponse.json({ error: 'Aksi tidak dikenali' }, { status: 400 });
-  } catch (error) {
-    if (error instanceof Error && error.message === 'UNAUTHORIZED') {
+  } catch (error: any) {
+    if (error?.message === 'UNAUTHORIZED') {
       return NextResponse.json({ error: 'Akses ditolak' }, { status: 401 });
     }
-    console.error('Settings error:', error);
-    return NextResponse.json({ error: 'Gagal memproses permintaan pengaturan.' }, { status: 500 });
+    console.error('Settings POST error:', error);
+    return NextResponse.json(
+      {
+        error: 'Gagal memproses permintaan pengaturan.',
+        details: error?.message || String(error),
+      },
+      { status: 500 }
+    );
   }
 }
