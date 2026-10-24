@@ -207,12 +207,21 @@ function ensureDataFile(): JsonDbData {
     cleanupQueue: [],
   };
 
-  fs.writeFileSync(DATA_FILE, JSON.stringify(initialData, null, 2), 'utf-8');
+  try {
+    fs.writeFileSync(DATA_FILE, JSON.stringify(initialData, null, 2), 'utf-8');
+  } catch {
+    // Ignore in read-only environments (e.g. Vercel)
+  }
   return initialData;
 }
 
 function saveDb(data: JsonDbData): void {
-  fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2), 'utf-8');
+  try {
+    fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2), 'utf-8');
+  } catch (err) {
+    // Gracefully handle read-only serverless filesystem
+    console.warn('saveDb local file write skipped (serverless environment):', err);
+  }
 }
 
 /**
@@ -921,7 +930,22 @@ export async function deleteSession(token: string): Promise<void> {
 
 export async function getSystemSettings(): Promise<SystemSettingsRecord> {
   const db = ensureDataFile();
-  const rawNumbers = db.settings.adminWhatsAppNumbers || db.settings.adminWhatsAppNumber || process.env.ADMIN_WHATSAPP_NUMBER || '089673038689';
+  let settingsMap: Record<string, string> = {};
+
+  if (isPostgresConfigured()) {
+    try {
+      const records = await prisma.systemSetting.findMany();
+      for (const r of records) {
+        settingsMap[r.key] = r.value;
+      }
+    } catch (e) {
+      console.warn('Prisma getSystemSettings fallback:', e);
+    }
+  }
+
+  const mergedSettings = { ...db.settings, ...settingsMap };
+
+  const rawNumbers = mergedSettings.adminWhatsAppNumbers || mergedSettings.adminWhatsAppNumber || process.env.ADMIN_WHATSAPP_NUMBER || '089673038689';
   const numbersArray = rawNumbers
     .split(/[\n,;]+/)
     .map((s) => s.trim().replace(/[^\d+]/g, ''))
@@ -935,39 +959,93 @@ export async function getSystemSettings(): Promise<SystemSettingsRecord> {
     fonnteTokenConfigured: Boolean(process.env.FONNTE_TOKEN),
     cloudinaryConfigured: Boolean(process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY),
     geminiConfigured: Boolean(process.env.GEMINI_API_KEY),
-    allowPublicSubmissions: db.settings.allowPublicSubmissions !== 'false',
-    reminderHour: parseInt(db.settings.reminderHour || '20', 10),
-    classLabel: db.settings.classLabel || 'Kelas 10 SIJA B',
-    totalStudents: db.students.length,
+    allowPublicSubmissions: mergedSettings.allowPublicSubmissions !== 'false',
+    reminderHour: parseInt(mergedSettings.reminderHour || '20', 10),
+    classLabel: mergedSettings.classLabel || 'Kelas 10 SIJA B',
+    totalStudents: db.students.length || 36,
   };
 }
 
 export async function updateSystemSetting(key: string, value: string): Promise<void> {
+  if (isPostgresConfigured()) {
+    try {
+      await prisma.systemSetting.upsert({
+        where: { key },
+        create: { key, value },
+        update: { value },
+      });
+      return;
+    } catch (e) {
+      console.warn('Prisma updateSystemSetting fallback:', e);
+    }
+  }
+
   const db = ensureDataFile();
   db.settings[key] = value;
   saveDb(db);
 }
 
 export async function addAuditLog(action: string, adminId?: string, details?: string, ipAddress?: string): Promise<void> {
-  const admin = adminId ? await getAdminById(adminId) : null;
-  const db = ensureDataFile();
-  const log: AuditRecord = {
-    id: `audit-${Date.now()}`,
-    adminId: adminId || null,
-    adminName: admin?.name || 'Sistem',
-    action,
-    details: details || null,
-    ipAddress: ipAddress || null,
-    createdAt: new Date().toISOString(),
-  };
-  db.auditLogs.unshift(log);
-  if (db.auditLogs.length > 200) {
-    db.auditLogs = db.auditLogs.slice(0, 200);
+  if (isPostgresConfigured()) {
+    try {
+      await prisma.auditLog.create({
+        data: {
+          adminId: adminId || null,
+          action,
+          details: details || null,
+          ipAddress: ipAddress || null,
+        },
+      });
+      return;
+    } catch (e) {
+      console.warn('Prisma addAuditLog fallback:', e);
+    }
   }
-  saveDb(db);
+
+  try {
+    const admin = adminId ? await getAdminById(adminId) : null;
+    const db = ensureDataFile();
+    const log: AuditRecord = {
+      id: `audit-${Date.now()}`,
+      adminId: adminId || null,
+      adminName: admin?.name || 'Sistem',
+      action,
+      details: details || null,
+      ipAddress: ipAddress || null,
+      createdAt: new Date().toISOString(),
+    };
+    db.auditLogs.unshift(log);
+    if (db.auditLogs.length > 200) {
+      db.auditLogs = db.auditLogs.slice(0, 200);
+    }
+    saveDb(db);
+  } catch (err) {
+    console.warn('Local audit log fallback skipped:', err);
+  }
 }
 
 export async function getAuditLogs(limit: number = 20): Promise<AuditRecord[]> {
+  if (isPostgresConfigured()) {
+    try {
+      const records = await prisma.auditLog.findMany({
+        take: limit,
+        orderBy: { createdAt: 'desc' },
+        include: { admin: true },
+      });
+      return records.map((r) => ({
+        id: r.id,
+        adminId: r.adminId,
+        adminName: r.admin?.name || 'Sistem',
+        action: r.action,
+        details: r.details,
+        ipAddress: r.ipAddress,
+        createdAt: r.createdAt.toISOString(),
+      }));
+    } catch (e) {
+      console.warn('Prisma getAuditLogs fallback:', e);
+    }
+  }
+
   const db = ensureDataFile();
   return db.auditLogs.slice(0, limit);
 }

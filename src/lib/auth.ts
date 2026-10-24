@@ -3,12 +3,12 @@ import bcrypt from 'bcryptjs';
 import { createSession, getSession, deleteSession } from './db.ts';
 import type { AdminUser } from './types.ts';
 
-const SESSION_COOKIE_NAME = 'cleanbieber_admin_session';
-const SESSION_MAX_AGE_SECONDS = 7 * 24 * 60 * 60; // 7 days
+export const SESSION_COOKIE_NAME = 'cleanbieber_admin_session';
+export const SESSION_MAX_AGE_SECONDS = 7 * 24 * 60 * 60; // 7 days
 
 async function getCookieStore() {
-  const nextHeaders = await import('next/headers');
-  return nextHeaders.cookies();
+  const { cookies } = await import('next/headers');
+  return await cookies();
 }
 
 // Simple in-memory rate limiting for login attempts
@@ -50,14 +50,18 @@ export async function createAdminSessionCookie(adminId: string): Promise<string>
 
   await createSession(adminId, token, expiresAt);
 
-  const cookieStore = await getCookieStore();
-  cookieStore.set(SESSION_COOKIE_NAME, token, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
-    path: '/',
-    maxAge: SESSION_MAX_AGE_SECONDS,
-  });
+  try {
+    const cookieStore = await getCookieStore();
+    cookieStore.set(SESSION_COOKIE_NAME, token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/',
+      maxAge: SESSION_MAX_AGE_SECONDS,
+    });
+  } catch (err) {
+    console.warn('createAdminSessionCookie next/headers fallback:', err);
+  }
 
   return token;
 }

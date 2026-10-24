@@ -1,7 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getAdminByUsername, addAuditLog } from '@/lib/db';
-import { verifyPassword, createAdminSessionCookie, checkLoginRateLimit, clearLoginRateLimit } from '@/lib/auth';
+import {
+  verifyPassword,
+  createAdminSessionCookie,
+  checkLoginRateLimit,
+  clearLoginRateLimit,
+  SESSION_COOKIE_NAME,
+  SESSION_MAX_AGE_SECONDS,
+} from '@/lib/auth';
 
 const LoginSchema = z.object({
   username: z.string().min(1, 'Username wajib diisi'),
@@ -46,10 +53,15 @@ export async function POST(req: NextRequest) {
     clearLoginRateLimit(ip);
 
     // Create session cookie
-    await createAdminSessionCookie(admin.id);
-    await addAuditLog('LOGIN', admin.id, `Admin ${admin.name} berhasil login.`, ip);
+    const token = await createAdminSessionCookie(admin.id);
 
-    return NextResponse.json({
+    try {
+      await addAuditLog('LOGIN', admin.id, `Admin ${admin.name} berhasil login.`, ip);
+    } catch (auditErr) {
+      console.warn('Audit log write error:', auditErr);
+    }
+
+    const res = NextResponse.json({
       success: true,
       admin: {
         id: admin.id,
@@ -57,8 +69,24 @@ export async function POST(req: NextRequest) {
         name: admin.name,
       },
     });
-  } catch (error) {
+
+    res.cookies.set(SESSION_COOKIE_NAME, token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/',
+      maxAge: SESSION_MAX_AGE_SECONDS,
+    });
+
+    return res;
+  } catch (error: any) {
     console.error('Login error:', error);
-    return NextResponse.json({ error: 'Terjadi kesalahan internal pada server' }, { status: 500 });
+    return NextResponse.json(
+      {
+        error: 'Terjadi kesalahan internal pada server',
+        details: error?.message || String(error),
+      },
+      { status: 500 }
+    );
   }
 }
