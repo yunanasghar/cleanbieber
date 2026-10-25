@@ -3,24 +3,36 @@
 @variant dark (&:where(.dark, .dark *));
 
 @theme {
-  --color-primary: #2563eb;
-  --color-primary-hover: #1d4ed8;
-  --color-surface-light: #ffffff;
-  --color-surface-dark: #0f172a;
+  --color-navy: #172b46;
+  --color-navy-dark: #102238;
+  --color-navy-hover: #1f3a5f;
+  --color-navy-active: #203656;
+  --color-blue-secondary: #31577d;
+  --color-blue-subtle: #edf3f9;
+  --color-page-bg: #f5f7fa;
+  --color-surface: #ffffff;
+  --color-text-main: #172b46;
+  --color-text-muted: #66758a;
+  --color-border-subtle: #e1e7ef;
+  --color-status-success: #237a57;
+  --color-status-warning: #a96b17;
+  --color-status-error: #b54747;
 }
 
 :root {
-  --bg-main: #f8fafc;
-  --text-main: #0f172a;
-  --text-muted: #64748b;
-  --border-color: #e2e8f0;
+  --bg-main: #f5f7fa;
+  --text-main: #172b46;
+  --text-muted: #66758a;
+  --border-color: #e1e7ef;
+  --navy-sidebar: #172b46;
 }
 
 .dark {
-  --bg-main: #0b1120;
-  --text-main: #f8fafc;
+  --bg-main: #0c1624;
+  --text-main: #f1f5f9;
   --text-muted: #94a3b8;
-  --border-color: #1e293b;
+  --border-color: #1e2e42;
+  --navy-sidebar: #0f1c2e;
 }
 
 html,
