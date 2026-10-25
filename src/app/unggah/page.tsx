@@ -14,7 +14,7 @@ import {
   Clock,
   ShieldAlert,
 } from 'lucide-react';
-import PublicNavbar from '@/components/PublicNavbar';
+import AppShell from '@/components/AppShell';
 import TaskBadge from '@/components/TaskBadge';
 import { getISOWeekInfo, getAssignedTask, DAY_NAMES } from '@/lib/rotation';
 import type { StudentRecord } from '@/lib/types';
@@ -425,13 +425,13 @@ function UploadFormContent() {
 
 export default function StudentUploadPage() {
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-[#0b1120] text-slate-900 dark:text-slate-100 transition-colors w-full max-w-full overflow-x-hidden">
-      <PublicNavbar />
-      <main className="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 py-5 sm:py-10 min-w-0">
-        <Suspense fallback={<div className="text-center text-xs text-slate-400">Memuat formulir...</div>}>
-          <UploadFormContent />
-        </Suspense>
-      </main>
-    </div>
+    <AppShell
+      pageTitle="Upload Bukti Foto Piket"
+      pageSubtitle="Ambil dan kirim foto area kelas yang telah kamu bersihkan sesuai jadwal piket."
+    >
+      <Suspense fallback={<div className="text-center text-xs text-slate-400 py-12">Memuat formulir...</div>}>
+        <UploadFormContent />
+      </Suspense>
+    </AppShell>
   );
 }

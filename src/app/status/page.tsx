@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Search, CheckCircle2, Clock, XCircle, Sparkles, Calendar, UploadCloud, ArrowRight } from 'lucide-react';
-import PublicNavbar from '@/components/PublicNavbar';
+import AppShell from '@/components/AppShell';
 import TaskBadge from '@/components/TaskBadge';
 import StatusBadge from '@/components/StatusBadge';
 import { formatIndonesianDate } from '@/lib/rotation';
@@ -76,21 +76,11 @@ export default function SubmissionStatusPage() {
   const selectedStudent = students.find((s) => s.id === selectedStudentId);
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-[#0b1120] text-slate-900 dark:text-slate-100 transition-colors w-full max-w-full overflow-x-hidden">
-      <PublicNavbar />
-
-      <main className="flex-1 max-w-4xl w-full mx-auto px-3 sm:px-6 lg:px-8 py-6 sm:py-10 space-y-5 min-w-0">
-        <div className="text-center max-w-lg mx-auto space-y-1.5 px-2">
-          <span className="text-xs font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400">
-            Pengecekan Status
-          </span>
-          <h1 className="text-xl sm:text-3xl font-extrabold text-slate-900 dark:text-white">
-            Cek Status Bukti Piket
-          </h1>
-          <p className="text-xs text-slate-500 dark:text-slate-400">
-            Pilih nama kamu untuk memantau apakah bukti piket telah disetujui atau memerlukan perbaikan.
-          </p>
-        </div>
+    <AppShell
+      pageTitle="Cek Status Bukti Piket"
+      pageSubtitle="Pilih nama kamu untuk memantau status verifikasi dan hasil evaluasi dari administrator kelas."
+    >
+      <div className="max-w-4xl w-full mx-auto space-y-6 min-w-0">
 
         {/* Student Selector */}
         <div className="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 sm:p-6 shadow-xs max-w-md mx-auto space-y-2 min-w-0">
@@ -210,7 +200,7 @@ export default function SubmissionStatusPage() {
             )}
           </div>
         )}
-      </main>
-    </div>
+      </div>
+    </AppShell>
   );
 }

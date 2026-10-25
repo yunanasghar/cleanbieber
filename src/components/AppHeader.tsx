@@ -22,9 +22,11 @@ import type { StudentRecord } from '@/lib/types';
 interface AppHeaderProps {
   selectedStudent?: StudentRecord | null;
   formattedDate: string;
-  onOpenStudentModal: () => void;
-  onOpenNotifications: () => void;
+  onOpenStudentModal?: () => void;
+  onOpenNotifications?: () => void;
   onOpenRecap?: () => void;
+  pageTitle?: string;
+  pageSubtitle?: string;
 }
 
 export default function AppHeader({
@@ -33,6 +35,8 @@ export default function AppHeader({
   onOpenStudentModal,
   onOpenNotifications,
   onOpenRecap,
+  pageTitle,
+  pageSubtitle,
 }: AppHeaderProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const pathname = usePathname();
@@ -51,19 +55,25 @@ export default function AppHeader({
         <div className="space-y-1 min-w-0">
           <div className="flex items-center gap-2">
             <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-[#172b46] dark:text-white">
-              Halo, {greetingName}!
+              {pageTitle || `Halo, ${greetingName}!`}
             </h1>
-            <button
-              type="button"
-              onClick={onOpenStudentModal}
-              className="text-xs px-2 py-0.5 rounded-md bg-[#edf3f9] hover:bg-[#dfeaf5] text-[#31577d] dark:bg-slate-800 dark:text-slate-300 font-medium transition-colors"
-              title="Ganti nama siswa"
-            >
-              Ganti siswa
-            </button>
+            {onOpenStudentModal && (
+              <button
+                type="button"
+                onClick={onOpenStudentModal}
+                className="text-xs px-2 py-0.5 rounded-md bg-[#edf3f9] hover:bg-[#dfeaf5] text-[#31577d] dark:bg-slate-800 dark:text-slate-300 font-medium transition-colors"
+                title="Ganti nama siswa"
+              >
+                Ganti siswa
+              </button>
+            )}
           </div>
           <p className="text-xs sm:text-sm text-[#66758a] dark:text-slate-400">
-            Selamat datang di <strong className="text-[#172b46] dark:text-slate-200">CleanBieber</strong>. Tetap semangat dan jaga kebersihan kelas kita!
+            {pageSubtitle || (
+              <>
+                Selamat datang di <strong className="text-[#172b46] dark:text-slate-200">CleanBieber</strong>. Tetap semangat dan jaga kebersihan kelas kita!
+              </>
+            )}
           </p>
         </div>
 
@@ -88,7 +98,7 @@ export default function AppHeader({
           {/* User Avatar Circle */}
           <button
             type="button"
-            onClick={onOpenStudentModal}
+            onClick={() => onOpenStudentModal?.()}
             className="w-10 h-10 rounded-full bg-[#172b46] dark:bg-slate-800 text-white flex items-center justify-center hover:bg-[#203656] transition-colors shadow-2xs cursor-pointer"
             title={selectedStudent ? selectedStudent.name : 'Pilih Nama Siswa'}
           >
@@ -158,7 +168,7 @@ export default function AppHeader({
                 type="button"
                 onClick={() => {
                   setMobileMenuOpen(false);
-                  onOpenStudentModal();
+                  onOpenStudentModal?.();
                 }}
                 className="px-2.5 py-1 text-xs font-medium rounded-lg bg-white dark:bg-slate-800 border border-slate-200 text-[#31577d] dark:text-blue-300"
               >
@@ -199,7 +209,7 @@ export default function AppHeader({
                 type="button"
                 onClick={() => {
                   setMobileMenuOpen(false);
-                  onOpenNotifications();
+                  onOpenNotifications?.();
                 }}
                 className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-900 text-left"
               >

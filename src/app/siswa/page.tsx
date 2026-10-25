@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Users, Search, Filter, UploadCloud, Calendar, ChevronRight } from 'lucide-react';
-import PublicNavbar from '@/components/PublicNavbar';
+import AppShell from '@/components/AppShell';
 import TaskBadge from '@/components/TaskBadge';
 import { getISOWeekInfo, getAssignedTask, DAY_NAMES } from '@/lib/rotation';
 import type { StudentRecord } from '@/lib/types';
@@ -48,23 +48,21 @@ export default function StudentDirectoryPage() {
   });
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-[#0b1120] text-slate-900 dark:text-slate-100 transition-colors w-full max-w-full overflow-x-hidden">
-      <PublicNavbar />
-
-      <main className="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 py-5 sm:py-8 space-y-5 min-w-0">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 dark:border-slate-800 pb-4">
+    <AppShell
+      pageTitle="Daftar Siswa & Hari Piket"
+      pageSubtitle="Setiap siswa memiliki hari jadwal tetap dan penugasan yang berotasi otomatis setiap minggunya."
+    >
+      <div className="space-y-6 min-w-0">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#e1e7ef] dark:border-slate-800 pb-4">
           <div>
             <div className="flex items-center gap-2">
-              <span className="text-xs font-semibold px-2 py-0.5 rounded bg-blue-100 text-blue-800 dark:bg-blue-900/60 dark:text-blue-200">
+              <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-[#edf3f9] text-[#172b46] dark:bg-slate-800 dark:text-blue-300 border border-blue-100 dark:border-slate-700">
                 Kelas 10 SIJA B
               </span>
-              <span className="text-xs text-slate-500 dark:text-slate-400">Total: 36 Siswa</span>
+              <span className="text-xs text-[#66758a] dark:text-slate-400">Total: 36 Siswa</span>
             </div>
-            <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white mt-1">
-              Daftar Siswa & Hari Piket
-            </h1>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-              Setiap siswa memiliki hari jadwal tetap dan penugasan yang berotasi otomatis setiap minggunya.
+            <p className="text-xs text-[#66758a] dark:text-slate-400 mt-1">
+              Daftar seluruh siswa, hari piket mingguan, dan tugas rotasi aktif minggu ini.
             </p>
           </div>
         </div>
@@ -237,7 +235,7 @@ export default function StudentDirectoryPage() {
             </table>
           </div>
         </div>
-      </main>
-    </div>
+      </div>
+    </AppShell>
   );
 }

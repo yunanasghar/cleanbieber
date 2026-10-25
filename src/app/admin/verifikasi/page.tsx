@@ -94,7 +94,7 @@ export default function VerificationCenterPage() {
             onClick={() => setActiveTab('all')}
             className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
               activeTab === 'all'
-                ? 'bg-blue-600 text-white shadow-xs'
+                ? 'bg-[#172b46] text-white shadow-xs'
                 : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
             }`}
           >
@@ -104,7 +104,7 @@ export default function VerificationCenterPage() {
             onClick={() => setActiveTab('pending')}
             className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
               activeTab === 'pending'
-                ? 'bg-blue-600 text-white shadow-xs'
+                ? 'bg-[#172b46] text-white shadow-xs'
                 : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
             }`}
           >
@@ -114,7 +114,7 @@ export default function VerificationCenterPage() {
             onClick={() => setActiveTab('verified')}
             className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
               activeTab === 'verified'
-                ? 'bg-blue-600 text-white shadow-xs'
+                ? 'bg-[#172b46] text-white shadow-xs'
                 : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
             }`}
           >
@@ -124,7 +124,7 @@ export default function VerificationCenterPage() {
             onClick={() => setActiveTab('rejected')}
             className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
               activeTab === 'rejected'
-                ? 'bg-blue-600 text-white shadow-xs'
+                ? 'bg-[#172b46] text-white shadow-xs'
                 : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
             }`}
           >
@@ -134,7 +134,7 @@ export default function VerificationCenterPage() {
             onClick={() => setActiveTab('excused')}
             className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
               activeTab === 'excused'
-                ? 'bg-blue-600 text-white shadow-xs'
+                ? 'bg-[#172b46] text-white shadow-xs'
                 : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
             }`}
           >

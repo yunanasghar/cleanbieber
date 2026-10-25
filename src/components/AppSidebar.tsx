@@ -8,6 +8,7 @@ import {
   Calendar,
   Camera,
   CheckCircle2,
+  Users,
   FileSpreadsheet,
   Bell,
   Sparkles,
@@ -49,6 +50,12 @@ export default function AppSidebar({
       href: '/status',
       icon: CheckCircle2,
       isActive: pathname.startsWith('/status'),
+    },
+    {
+      label: 'Daftar Siswa',
+      href: '/siswa',
+      icon: Users,
+      isActive: pathname.startsWith('/siswa'),
     },
     {
       label: 'Rekap Kebersihan',
