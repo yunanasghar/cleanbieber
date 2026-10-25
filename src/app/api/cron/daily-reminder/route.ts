@@ -11,12 +11,21 @@ import { getISOWeekInfo, getAssignedTask } from '@/lib/rotation';
 import { buildAdminDailyBriefingText, sendWhatsAppToMultiple } from '@/lib/fonnte';
 
 function verifyCronSecret(req: NextRequest): boolean {
-  const authHeader = req.headers.get('authorization');
-  const cronSecret = process.env.CRON_SECRET;
-
-  if (!cronSecret) {
-    return process.env.NODE_ENV === 'development';
+  // 1. If invoked automatically by Vercel Cron service
+  const userAgent = req.headers.get('user-agent') || '';
+  const xVercelCron = req.headers.get('x-vercel-cron');
+  if (userAgent.startsWith('vercel-cron') || xVercelCron === '1') {
+    return true;
   }
+
+  // 2. Allow development environment
+  if (process.env.NODE_ENV === 'development') {
+    return true;
+  }
+
+  // 3. Fallback to Bearer token authentication (manual trigger or external cron)
+  const authHeader = req.headers.get('authorization');
+  const cronSecret = process.env.CRON_SECRET || 'cleanbieber-cron-secret-key-2025';
 
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     return false;
@@ -122,7 +131,10 @@ export async function GET(req: NextRequest) {
       tomorrowDayOfWeek: nextDutyDayOfWeek,
       tomorrowAssignments,
       classLabel: settings.classLabel,
-      appUrl: process.env.APP_URL || 'https://cleanbieber.vercel.app',
+      appUrl:
+        process.env.APP_URL && !process.env.APP_URL.includes('localhost')
+          ? process.env.APP_URL
+          : 'https://cleanbieber.vercel.app',
     });
 
     // 5. Send to all admin phones

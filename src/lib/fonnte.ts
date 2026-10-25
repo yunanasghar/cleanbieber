@@ -132,7 +132,12 @@ export function buildDailyReminderText(params: {
   const { targetDate, assignments } = params;
   const formattedDate = formatIndonesianDate(new Date(`${targetDate}T00:00:00+07:00`));
   const classLabel = params.classLabel || 'Kelas 10 SIJA B';
-  const appUrl = params.appUrl || process.env.APP_URL || 'https://cleanbieber.vercel.app';
+  const appUrl =
+    params.appUrl && !params.appUrl.includes('localhost')
+      ? params.appUrl
+      : process.env.APP_URL && !process.env.APP_URL.includes('localhost')
+      ? process.env.APP_URL
+      : 'https://cleanbieber.vercel.app';
 
   const mbgStudents = assignments.filter((a) => a.taskName === 'MBG');
   const nyapuStudents = assignments.filter((a) => a.taskName === 'Nyapu' || (a.taskName as string) === 'Nyapu & Pel');
@@ -229,7 +234,12 @@ export function buildAdminDailyBriefingText(params: {
   appUrl?: string;
 }): string {
   const classLabel = params.classLabel || 'Kelas 10 SIJA B';
-  const appUrl = params.appUrl || process.env.APP_URL || 'https://cleanbieber.vercel.app';
+  const appUrl =
+    params.appUrl && !params.appUrl.includes('localhost')
+      ? params.appUrl
+      : process.env.APP_URL && !process.env.APP_URL.includes('localhost')
+      ? process.env.APP_URL
+      : 'https://cleanbieber.vercel.app';
 
   const isWeekend = params.isWeekend ?? (params.todayDayOfWeek > 5);
   const todayFormatted = formatIndonesianDate(new Date(`${params.todayDate}T00:00:00+07:00`));
